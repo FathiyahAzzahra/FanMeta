@@ -1,0 +1,10 @@
+# Versi yang sudah diuji dengan aplikasi ini (Python 3.11).
+# torch dari PyPI = versi CPU. Untuk GPU, pasang torch dari https://pytorch.org sesuai versi CUDA.
+streamlit==1.64.0
+torch==2.14.0
+transformers==5.17.0
+firebase-admin==7.6.0
+requests==2.34.2
+numpy==2.4.6
+pandas==3.0.5
+pillow==12.3.0
