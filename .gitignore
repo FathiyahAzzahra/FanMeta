@@ -1,0 +1,34 @@
+# ===== Rahasia: JANGAN pernah di-commit (repo ini public) =====
+.streamlit/secrets.toml
+.env
+*.env
+*serviceAccount*.json
+*firebase-adminsdk*.json
+*.pem
+
+# ===== Lingkungan Python (buat ulang dengan: pip install -r requirements.txt) =====
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ===== Model: terlalu besar untuk GitHub (maks 100 MB per file) =====
+# Hanya pengaturan model (threshold) yang ikut; file .pt disalin manual ke folder checkpoints/.
+checkpoints/*
+!checkpoints/06_model_app.json
+
+# ===== Log =====
+*.log
+
+# ===== Editor & alat bantu (pengaturan pribadi) =====
+.vscode/
+.idea/
+.claude/
+.agents/
+
+# ===== File sistem operasi =====
+Thumbs.db
+desktop.ini
+.DS_Store

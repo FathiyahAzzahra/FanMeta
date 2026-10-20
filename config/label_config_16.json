@@ -1,0 +1,52 @@
+{
+  "seed": 42,
+  "language": "English",
+  "tags": [
+    "Alcohol",
+    "Humor",
+    "Angst",
+    "Blood/Injury",
+    "Character Death",
+    "Established Relationship",
+    "Family",
+    "Fluff",
+    "Friendship",
+    "Hurt/Comfort",
+    "Mental Health",
+    "Mythical Creatures",
+    "Pining",
+    "Smut",
+    "Suicide",
+    "Whump"
+  ],
+  "ratings": [
+    "General Audiences",
+    "Teen And Up Audiences",
+    "Mature",
+    "Explicit"
+  ],
+  "rating_to_id": {
+    "General Audiences": 0,
+    "Teen And Up Audiences": 1,
+    "Mature": 2,
+    "Explicit": 3
+  },
+  "warning_labels": [
+    "No Archive Warnings Apply",
+    "Graphic Depictions Of Violence",
+    "Major Character Death",
+    "Rape/Non-Con"
+  ],
+  "warning_cols": [
+    "warning_no_archive_warnings_apply",
+    "warning_graphic_depictions_of_violence",
+    "warning_major_character_death",
+    "warning_rape_non-con"
+  ],
+  "n_tags": 16,
+  "n_ratings": 4,
+  "n_warnings": 4,
+  "nllb_in_training": false,
+  "tokenization_in_notebook": false,
+  "hierarchical_model": "RoBERTa -> Segment -> LSTM"
+}

@@ -1,0 +1,15 @@
+[theme]
+base = "light"
+primaryColor = "#635bff"
+backgroundColor = "#f7f8fc"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#202033"
+borderColor = "#e5e7eb"
+baseRadius = "8px"
+showWidgetBorder = true
+# Inter dari Google Fonts, sama dengan mockup Figma
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+
+[server]
+runOnSave = true

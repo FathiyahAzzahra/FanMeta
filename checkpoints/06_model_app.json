@@ -1,0 +1,36 @@
+{
+  "label_version": "v2",
+  "encoder_model": "FacebookAI/roberta-base",
+  "roberta_checkpoint": "02_roberta_stage1.pt",
+  "lstm_type": "task_specific",
+  "lstm_seed": 42,
+  "lstm_checkpoint": "04_lstm_task_specific_seed42.pt",
+  "warning_thresholds": [
+    0.3,
+    0.65,
+    0.35,
+    0.65
+  ],
+  "tag_thresholds": [
+    0.65,
+    0.5,
+    0.6,
+    0.55,
+    0.55,
+    0.55,
+    0.7,
+    0.55,
+    0.55,
+    0.4,
+    0.7,
+    0.6,
+    0.5,
+    0.85,
+    0.35,
+    0.55
+  ],
+  "max_tags": 5,
+  "segment_words": 200,
+  "overlap_words": 50,
+  "token_max_length": 256
+}
