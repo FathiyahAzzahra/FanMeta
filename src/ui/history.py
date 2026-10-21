@@ -1,5 +1,6 @@
 """User-scoped Firestore analysis history: tabel riwayat + halaman detail."""
 import html
+import math
 from typing import Any
 
 import streamlit as st
@@ -7,25 +8,35 @@ import streamlit as st
 from src.firestore_history import FirestoreHistory, FirestoreHistoryError
 from src.gallery_store import MAX_PEN_NAME_CHARS, GalleryError, GalleryStore
 from src.ui import gallery as gallery_view
-from src.ui.components import GALLERY_ENABLED, LANGUAGE_LABEL as _LANGUAGE_LABEL, format_created_at, rating_badge
+from src.ui.components import (
+    GALLERY_ENABLED, LANGUAGE_LABEL as _LANGUAGE_LABEL, format_created_at, format_relative, page_header, rating_badge,
+)
 from src.ui.results import copy_button, render_result_cards, summary_html
 from src.ui.workspace_link import open_story, save_to_workspace_dialog
 from src.workspace_store import WorkspaceError, WorkspaceStore
-_COLS = [3.0, 1.2, 1.5, 0.9, 1.6]
+_COLS = [3.6, 1.25, 1.45, 1.05, 0.75]
 _ALL_SOURCES, _QUICK, _WORKSPACE = "All sources", "Quick Analysis", "Workspace"
+PAGE_SIZES = (10, 25, 50)  # pilihan jumlah baris per halaman; yang pertama = bawaan
 
 
 def is_workspace(item: dict[str, Any]) -> bool:
     return item.get("source") == "workspace" and bool(item.get("work_id"))
 
 
-def source_html(item: dict[str, Any]) -> str:
-    """Penanda sumber analisis. Analisis lama tanpa field 'source' = Quick Analysis."""
+def source_html(item: dict[str, Any], title: str | None = None) -> str:
+    """Penanda sumber analisis. Analisis lama tanpa field 'source' = Quick Analysis.
+
+    ``title``: judul yang sudah tampil; keterangan "cerita · Chapter n" tidak diulang kalau sudah ada di judul.
+    """
     if not is_workspace(item):
         return '<span class="src-badge src-quick">Quick Analysis</span>'
+    work_title = str(item.get("work_title") or "")
     chapter = f"Chapter {item.get('chapter_number', '?')}"
-    return (f'<span class="src-badge src-ws">Workspace</span><span class="src-where">'
-            f'{html.escape(str(item.get("work_title") or ""))} · {chapter}</span>')
+    badge_html = '<span class="src-badge src-ws">Workspace</span>'
+    if title and work_title in title:
+        # nama cerita sudah ada di judul: cukup tampilkan nomor bab (kalau belum tertulis juga)
+        return badge_html if chapter in title else f'{badge_html}<span class="src-where">{chapter}</span>'
+    return f'{badge_html}<span class="src-where">{html.escape(work_title)} · {chapter}</span>'
 
 
 def _open_detail(analysis_id: str) -> None:
@@ -64,9 +75,57 @@ def _confirm_delete(user: dict[str, str], history_store: FirestoreHistory, analy
             st.rerun()
 
 
+def _set_page(page: int) -> None:
+    st.session_state["hist_page"] = page
+
+
+def _set_page_size() -> None:
+    # disalin ke key biasa supaya pilihan tetap diingat setelah membuka halaman detail
+    st.session_state["hist_page_size"] = st.session_state["hist_page_size_w"]
+
+
+def _page_numbers(page: int, pages: int) -> list[int | None]:
+    """Nomor halaman yang ditampilkan; None = tanda '…'. Contoh (5 dari 12): 1 … 4 5 6 … 12."""
+    if pages <= 7:
+        return list(range(1, pages + 1))
+    middle = range(max(2, page - 1), min(pages - 1, page + 1) + 1)
+    numbers: list[int | None] = [1]
+    if middle[0] > 2:
+        numbers.append(None)
+    numbers += list(middle)
+    if middle[-1] < pages - 1:
+        numbers.append(None)
+    return numbers + [pages]
+
+
+def _render_pager(page: int, pages: int, start: int, shown: int, total: int, size: int) -> None:
+    with st.container(key="ht_footer", horizontal=True, vertical_alignment="center",
+                      horizontal_alignment="distribute"):
+        st.markdown(f'<div class="ht-count">Showing <b>{start + 1}–{start + shown}</b> of <b>{total}</b> '
+                    f'analys{"is" if total == 1 else "es"}</div>', unsafe_allow_html=True, width="content")
+        with st.container(horizontal=True, vertical_alignment="center", gap="small", width="content"):
+            st.markdown('<div class="ht-count">Rows per page</div>', unsafe_allow_html=True, width="content")
+            st.selectbox("Rows per page", PAGE_SIZES, index=PAGE_SIZES.index(size), key="hist_page_size_w",
+                         label_visibility="collapsed", width=84, on_change=_set_page_size)
+            st.button("", key="hist_pg_prev", icon=":material/chevron_left:", help="Previous page",
+                      disabled=page <= 1, on_click=_set_page, args=(page - 1,))
+            for n in _page_numbers(page, pages):
+                if n is None:
+                    st.markdown('<div class="ht-count">…</div>', unsafe_allow_html=True, width="content")
+                else:
+                    st.button(str(n), key=f"hist_pgc_{n}" if n == page else f"hist_pg_{n}",
+                              on_click=_set_page, args=(n,))
+            st.button("", key="hist_pg_next", icon=":material/chevron_right:", help="Next page",
+                      disabled=page >= pages, on_click=_set_page, args=(page + 1,))
+
+
+def _date(value: Any) -> str:
+    text = format_relative(value)
+    return text[:1].upper() + text[1:]
+
+
 def _render_table(user: dict[str, str], history_store: FirestoreHistory) -> None:
-    st.title("Analysis History")
-    st.markdown('<p class="page-kicker">Browse, search, and recover previously processed metadata reports for your drafts.</p>', unsafe_allow_html=True)
+    page_header("Analysis History", "Browse, search, and recover previously processed metadata reports for your drafts.")
     try:
         history = history_store.list_history(user["uid"])
     except FirestoreHistoryError:
@@ -74,11 +133,11 @@ def _render_table(user: dict[str, str], history_store: FirestoreHistory) -> None
     if not history:
         st.info("Belum ada riwayat analisis."); return
 
-    with st.container(border=True):
-        st.markdown('<span class="hist-search-marker"></span>', unsafe_allow_html=True)
+    with st.container(border=True, key="hist_search"):
         search_col, label_col, filter_col, source_col = st.columns([3.4, .7, 1.2, 1.2], vertical_alignment="center")
         with search_col:
-            search = st.text_input("Search", label_visibility="collapsed", placeholder="Search by story title...")
+            search = st.text_input("Search", label_visibility="collapsed", placeholder="Search by story title...",
+                                   icon=":material/search:")
         with label_col:
             st.markdown('<div class="hist-filter-label">Filter:</div>', unsafe_allow_html=True)
         with filter_col:
@@ -98,28 +157,45 @@ def _render_table(user: dict[str, str], history_store: FirestoreHistory) -> None
             continue
         rows.append((item, title, language))
 
-    with st.container(border=True):
-        st.markdown('<span class="hist-table-marker"></span>', unsafe_allow_html=True)
-        header = st.columns(_COLS, vertical_alignment="center")
-        for col, name in zip(header, ("Story Title", "Draft Language", "Date Processed", "Rating", "Actions")):
-            col.markdown(f'<div class="ht-head">{name}</div>', unsafe_allow_html=True)
+    # pagination: kembali ke halaman 1 setiap kali pencarian, filter, atau jumlah baris berubah
+    size = st.session_state.get("hist_page_size", PAGE_SIZES[0])
+    size = size if size in PAGE_SIZES else PAGE_SIZES[0]
+    signature = (search, language_filter, source_filter, size)
+    if st.session_state.get("hist_filter_sig") != signature:
+        st.session_state["hist_filter_sig"] = signature
+        st.session_state["hist_page"] = 1
+    pages = max(1, math.ceil(len(rows) / size))
+    page = min(max(1, int(st.session_state.get("hist_page", 1))), pages)  # mis. setelah baris terakhir dihapus
+    start = (page - 1) * size
+
+    # tabel: baris judul kolom + satu baris per analisis (garis pemisah & padding diatur di styles.py)
+    with st.container(key="ht_table", gap=None):
+        with st.container(key="ht_header"):
+            for col, name in zip(st.columns(_COLS, vertical_alignment="center"),
+                                 ("Story title", "Draft language", "Date processed", "Rating", "Actions")):
+                col.markdown(f'<div class="ht-head">{name}</div>', unsafe_allow_html=True)
         if not rows:
             st.markdown('<div class="ht-empty">Tidak ada riwayat yang cocok dengan pencarian.</div>', unsafe_allow_html=True)
-        for item, title, language in rows:
-            c_title, c_lang, c_date, c_rating, c_action = st.columns(_COLS, vertical_alignment="center")
-            c_title.markdown(f'<div class="ht-title">{html.escape(title)}</div><div class="ht-src">{source_html(item)}</div>',
-                             unsafe_allow_html=True)
-            c_lang.markdown(f'<div class="ht-cell">{html.escape(_LANGUAGE_LABEL.get(language, language))}</div>', unsafe_allow_html=True)
-            c_date.markdown(f'<div class="ht-cell">{format_created_at(item.get("created_at"))}</div>', unsafe_allow_html=True)
-            c_rating.markdown(rating_badge(str(item.get("rating") or "")), unsafe_allow_html=True)
-            with c_action:
-                with st.container(horizontal=True, gap="small", vertical_alignment="center"):
-                    st.button(
-                        "View Details", key=f"hist_view_{item['analysis_id']}",
-                        on_click=_open_detail, args=(item["analysis_id"],),
-                    )
-                    if st.button("Delete", key=f"hist_del_{item['analysis_id']}"):
-                        _confirm_delete(user, history_store, item["analysis_id"], title, item)
+        for item, title, language in rows[start:start + size]:
+            aid = item["analysis_id"]
+            with st.container(key=f"ht_row_{aid}"):
+                c_title, c_lang, c_date, c_rating, c_action = st.columns(_COLS, vertical_alignment="center")
+                c_title.markdown(f'<div class="ht-title">{html.escape(title)}</div>'
+                                 f'<div class="ht-src">{source_html(item, title)}</div>', unsafe_allow_html=True)
+                c_lang.markdown(f'<div class="ht-cell">{html.escape(_LANGUAGE_LABEL.get(language, language))}</div>',
+                                unsafe_allow_html=True)
+                c_date.markdown(f'<div class="ht-cell" title="{format_created_at(item.get("created_at"))}">'
+                                f'{_date(item.get("created_at"))}</div>', unsafe_allow_html=True)
+                c_rating.markdown(rating_badge(str(item.get("rating") or "")), unsafe_allow_html=True)
+                with c_action:
+                    with st.container(horizontal=True, gap="small", vertical_alignment="center"):
+                        st.button("", key=f"hist_view_{aid}", icon=":material/visibility:", type="tertiary",
+                                  help="View details", on_click=_open_detail, args=(aid,))
+                        if st.button("", key=f"hist_del_{aid}", icon=":material/delete:", type="tertiary",
+                                     help="Delete"):
+                            _confirm_delete(user, history_store, aid, title, item)
+        if rows:
+            _render_pager(page, pages, start, len(rows[start:start + size]), len(rows), size)
 
 
 def _rerun_analysis(item: dict[str, Any]) -> None:
