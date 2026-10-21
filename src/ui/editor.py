@@ -10,6 +10,8 @@ from typing import Any
 
 import streamlit as st
 
+from src.i18n import is_id, tr
+
 _SVG = ('<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{}</svg>')
 _ICONS = {
@@ -62,42 +64,42 @@ _HTML = f"""
 
 _CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
-.fmed { border:1px solid #e5e7eb; border-radius:12px; background:#fff; font-family:Inter,sans-serif; }
-.fmed-bar { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; padding:.7rem 1.4rem; border-bottom:1px solid #e5e7eb;
-  background:#fff; border-radius:12px 12px 0 0; }
-.fmed-block { border:0; background:transparent; font:500 .92rem Inter,sans-serif; color:#202033; padding:.4rem .5rem;
+.fmed { border:1px solid var(--bd-e5e7eb, #e5e7eb); border-radius:12px; background:var(--bg-ffffff, #fff); font-family:Inter,sans-serif; }
+.fmed-bar { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; padding:.7rem 1.4rem; border-bottom:1px solid var(--bd-e5e7eb, #e5e7eb);
+  background:var(--bg-ffffff, #fff); border-radius:12px 12px 0 0; }
+.fmed-block { border:0; background:transparent; font:500 .92rem Inter,sans-serif; color:var(--fg-202033, #202033); padding:.4rem .5rem;
   margin-right:.4rem; cursor:pointer; outline:none; border-radius:6px; }
-.fmed-block:hover { background:#f5f5fb; }
-.fmed-bar button { border:0; background:transparent; color:#202033; border-radius:7px; height:34px; min-width:34px;
+.fmed-block:hover { background:var(--bg-f5f5fb, #f5f5fb); }
+.fmed-bar button { border:0; background:transparent; color:var(--fg-202033, #202033); border-radius:7px; height:34px; min-width:34px;
   padding:0 .5rem; font:500 .95rem Inter,sans-serif; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
-.fmed-bar button:hover { background:#efeeff; color:#635bff; }
-.fmed-sep { width:1px; height:22px; background:#e5e7eb; margin:0 .35rem; }
-.fmed-meta { margin-left:auto; font-size:.82rem; color:#505365; }
+.fmed-bar button:hover { background:var(--bg-efeeff, #efeeff); color:var(--fg-635bff, #635bff); }
+.fmed-sep { width:1px; height:22px; background:var(--bg-e5e7eb, #e5e7eb); margin:0 .35rem; }
+.fmed-meta { margin-left:auto; font-size:.82rem; color:var(--fg-505365, #505365); }
 .fmed-page { max-width:940px; margin:0 auto; padding:2.6rem 1.5rem 2.4rem; }
-.fmed-doc { display:flex; justify-content:space-between; gap:1rem; font-size:.74rem; color:#505365; margin-bottom:1.6rem; }
+.fmed-doc { display:flex; justify-content:space-between; gap:1rem; font-size:.74rem; color:var(--fg-505365, #505365); margin-bottom:1.6rem; }
 .fmed-doc-l { text-transform:uppercase; letter-spacing:.03em; }
-.fmed-area { min-height:460px; outline:none; font-size:1.2rem; line-height:1.75; color:#202033;
+.fmed-area { min-height:460px; outline:none; font-size:1.2rem; line-height:1.75; color:var(--fg-202033, #202033);
   font-family:'Source Serif 4',Georgia,'Times New Roman',serif; }
-.fmed-area:empty::before { content:attr(data-placeholder); color:#9ca3af; font-style:italic; }
+.fmed-area:empty::before { content:attr(data-placeholder); color:var(--fg-9ca3af, #9ca3af); font-style:italic; }
 .fmed-area p, .fmed-area > div { margin:0 0 1.35rem; }
-.fmed-area h2 { font-size:1.45rem; font-weight:600; margin:1.8rem 0 .9rem; font-family:inherit; color:#202033; }
-.fmed-area blockquote { margin:0 0 1.35rem; padding:.1rem 0 .1rem 1.2rem; border-left:3px solid #c7c3ff; color:#505365; font-style:italic; }
+.fmed-area h2 { font-size:1.45rem; font-weight:600; margin:1.8rem 0 .9rem; font-family:inherit; color:var(--fg-202033, #202033); }
+.fmed-area blockquote { margin:0 0 1.35rem; padding:.1rem 0 .1rem 1.2rem; border-left:3px solid var(--bd-c7c3ff, #c7c3ff); color:var(--fg-505365, #505365); font-style:italic; }
 .fmed-area ul, .fmed-area ol { margin:0 0 1.35rem; padding-left:1.6rem; }
 .fmed-area hr { border:0; text-align:center; margin:1.6rem 0; height:auto; overflow:visible; }
-.fmed-area hr::after { content:"*  *  *"; color:#505365; letter-spacing:.35rem; font-size:1rem; }
+.fmed-area hr::after { content:"*  *  *"; color:var(--fg-505365, #505365); letter-spacing:.35rem; font-size:1rem; }
 .fmed-foot { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.4rem;
-  border-top:1px solid #e5e7eb; position:sticky; bottom:0; z-index:2; background:#fff; border-radius:0 0 12px 12px; }
+  border-top:1px solid var(--bd-e5e7eb, #e5e7eb); position:sticky; bottom:0; z-index:2; background:var(--bg-ffffff, #fff); border-radius:0 0 12px 12px; }
 .fmed-left { display:flex; align-items:center; gap:1.4rem; flex-wrap:wrap; }
-.fmed-words { font-size:.92rem; color:#202033; }
-.fmed-status { display:inline-flex; align-items:center; gap:.4rem; font-size:.92rem; color:#237c64; }
+.fmed-words { font-size:.92rem; color:var(--fg-202033, #202033); }
+.fmed-status { display:inline-flex; align-items:center; gap:.4rem; font-size:.92rem; color:var(--fg-237c64, #237c64); }
 .fmed-status svg { width:16px; height:16px; display:block; }
-.fmed-status.dirty, .fmed-status.busy { color:#b86010; }
-.fmed-status.error { color:#d04452; }
+.fmed-status.dirty, .fmed-status.busy { color:var(--fg-b86010, #b86010); }
+.fmed-status.error { color:var(--fg-d04452, #d04452); }
 .fmed-status:not(.saved) .fmed-ok { display:none; }
-.fmed-when { font-size:.8rem; color:#505365; }
-.fmed-save { border:0; border-radius:8px; background:#635bff; color:#fff; font:600 .95rem Inter,sans-serif;
+.fmed-when { font-size:.8rem; color:var(--fg-505365, #505365); }
+.fmed-save { border:0; border-radius:8px; background:var(--bg-635bff, #635bff); color:var(--fg-ffffff, #fff); font:600 .95rem Inter,sans-serif;
   padding:.75rem 1.2rem; cursor:pointer; }
-.fmed-save:hover { background:#5149db; }
+.fmed-save:hover { background:var(--bg-5149db, #5149db); }
 """
 
 _JS = """
@@ -113,6 +115,14 @@ export default function (component) {
   const when = root.querySelector(".fmed-when")
   const words = root.querySelector(".fmed-words")
   const block = root.querySelector(".fmed-block")
+  // teks antarmuka sesuai bahasa (dikirim dari Python)
+  const L = data.labels || {}
+  block.options[0].text = L.paragraph || "Paragraph"
+  block.options[1].text = L.heading || "Heading"
+  block.options[2].text = L.quote || "Quote"
+  block.title = L.style || "Text style"
+  root.querySelectorAll("[data-cmd]").forEach((b) => { if (L.titles && L.titles[b.dataset.cmd]) b.title = L.titles[b.dataset.cmd] })
+  root.querySelector(".fmed-save").textContent = L.save || "Save & back to story"
   root.querySelector(".fmed-meta").textContent = data.meta || ""
   root.querySelector(".fmed-doc-l").textContent = data.doc_left || ""
   root.querySelector(".fmed-doc-r").textContent = data.doc_right || ""
@@ -145,7 +155,7 @@ export default function (component) {
   const countWords = () => {
     const text = area.innerText.replace(/[✻*]/g, " ").trim()
     const n = text ? text.split(/\\s+/).length : 0
-    words.textContent = n.toLocaleString("en-US") + " words"
+    words.textContent = n.toLocaleString(L.locale || "en-US") + " " + (L.words || "words")
   }
   countWords()
 
@@ -155,13 +165,13 @@ export default function (component) {
     const value = area.innerHTML
     if (value !== st.lastEmitted) {
       st.lastEmitted = value
-      setStatus("busy", "Saving…")
+      setStatus("busy", L.saving || "Saving…")
       setStateValue("value", value)
     }
   }
   const changed = () => {
     countWords()
-    setStatus("dirty", "Unsaved changes")
+    setStatus("dirty", L.unsaved || "Unsaved changes")
     clearTimeout(st.timer)
     st.timer = setTimeout(emit, 1500)
   }
@@ -171,7 +181,7 @@ export default function (component) {
     clearTimeout(st.timer)
     st.timer = null
     st.lastEmitted = area.innerHTML
-    setStatus("busy", "Saving…")
+    setStatus("busy", L.saving || "Saving…")
     setTriggerValue("save", area.innerHTML)
   }
 
@@ -221,6 +231,22 @@ _EDITOR = st.components.v2.component(
 )
 
 
+def _labels() -> dict[str, Any]:
+    return {
+        "paragraph": tr("Paragraph", "Paragraf"), "heading": tr("Heading", "Judul"), "quote": tr("Quote", "Kutipan"),
+        "style": tr("Text style", "Gaya teks"), "save": tr("Save & back to story", "Simpan & kembali ke cerita"),
+        "words": tr("words", "kata"), "saving": tr("Saving…", "Menyimpan…"),
+        "unsaved": tr("Unsaved changes", "Belum tersimpan"), "locale": "id-ID" if is_id() else "en-US",
+        "titles": {
+            "bold": tr("Bold (Ctrl+B)", "Tebal (Ctrl+B)"), "italic": tr("Italic (Ctrl+I)", "Miring (Ctrl+I)"),
+            "underline": tr("Underline (Ctrl+U)", "Garis bawah (Ctrl+U)"), "formatBlock:h2": tr("Heading", "Judul"),
+            "formatBlock:blockquote": tr("Quote", "Kutipan"),
+            "insertUnorderedList": tr("Bulleted list", "Daftar berpoin"),
+            "insertOrderedList": tr("Numbered list", "Daftar bernomor"), "scene": tr("Scene break", "Pergantian adegan"),
+        },
+    }
+
+
 def editor_key(chapter_id: str) -> str:
     return f"chapter_editor_{chapter_id}"
 
@@ -257,7 +283,8 @@ def chapter_editor(chapter_id: str, stored_html: str, status: dict[str, str], pl
         key=key,
         data={"value": value, "doc_id": chapter_id, "status": status.get("text", ""),
               "status_kind": status.get("kind", "saved"), "status_when": status.get("when", ""),
-              "placeholder": placeholder, "meta": meta, "doc_left": doc_left, "doc_right": doc_right},
+              "placeholder": placeholder, "meta": meta, "doc_left": doc_left, "doc_right": doc_right,
+              "labels": _labels()},
         default={"value": value},
         on_value_change=lambda: None,
         on_save_change=on_save or (lambda: None),

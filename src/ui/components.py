@@ -11,12 +11,16 @@ from typing import Any
 import streamlit as st
 from PIL import Image
 
+from src.i18n import (  # noqa: F401 - format_relative/format_date juga dipakai modul lain lewat sini
+    format_date, format_relative, lang, set_lang, theme, toggle_theme, tr,
+)
+
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
 # ubah ke False untuk menyembunyikan seluruh fitur galeri publik (menu, Publish, tombol Read)
 GALLERY_ENABLED = False
 
-LANGUAGE_LABEL = {"Bahasa Indonesia": "Indonesian", "Bahasa Inggris": "English"}
+LANGUAGE_LABEL = {"Bahasa Indonesia": "Indonesian", "Bahasa Inggris": "English"}  # lama; pakai i18n.language_label
 RATING_BADGE = {
     "general audiences": ("General", "rb-general"),
     "teen and up audiences": ("Teen", "rb-teen"),
@@ -36,7 +40,6 @@ def navigate_cb(page: str) -> None:
     st.session_state["page"] = page
 
 
-@st.cache_data(show_spinner=False)
 @st.cache_data(show_spinner=False, max_entries=16)
 def asset_data_uri(stem: str, max_px: int | None = None) -> str:
     """Cari src/asset/<stem>.(png|jpg|jpeg|webp) dan kembalikan sebagai data URI.
@@ -72,17 +75,28 @@ def _logout() -> None:
     st.session_state["page"] = "home"
 
 
-@st.dialog("Log out of FanMeta?", icon=":material/logout:")
-def _confirm_logout() -> None:
+def open_dialog(title: str, icon: str, body: Any, *args: Any) -> None:
+    """Buka st.dialog dengan judul sesuai bahasa (judul decorator @st.dialog tidak bisa berubah)."""
+    st.dialog(title, icon=icon)(body)(*args)
+
+
+def _logout_body() -> None:
     # pop-up konfirmasi agar pengguna tidak keluar tanpa sengaja
-    st.markdown('<p class="dlg-text">Your stories, notes, and analysis results are safely saved in your workspace. '
-                "Log in again whenever you're ready to write.</p>", unsafe_allow_html=True)
+    st.markdown('<p class="dlg-text">' + tr(
+        "Your stories, notes, and analysis results are safely saved in your workspace. "
+        "Log in again whenever you're ready to write.",
+        "Cerita, catatan, dan hasil analisismu tersimpan aman di workspace. "
+        "Masuk lagi kapan pun kamu siap menulis.") + "</p>", unsafe_allow_html=True)
     with st.container(horizontal=True, horizontal_alignment="right"):
-        if st.button("Cancel", key="logout_cancel"):
+        if st.button(tr("Cancel", "Batal"), key="logout_cancel"):
             st.rerun()
-        if st.button("Log out", key="logout_confirm", type="primary"):
+        if st.button(tr("Log out", "Keluar"), key="logout_confirm", type="primary"):
             _logout()
             st.rerun()
+
+
+def _confirm_logout() -> None:
+    open_dialog(tr("Log out of FanMeta?", "Keluar dari FanMeta?"), ":material/logout:", _logout_body)
 
 
 def danger_box(title: str, lines: list[str], icon_name: str = "book") -> str:
@@ -146,21 +160,17 @@ def badge(text: str, tone: str | None = None) -> str:
     return f'<span class="bdg bdg-{tone}">{html.escape(str(text))}</span>'
 
 
-def format_relative(value: Any) -> str:
-    """'today, 10:36' / 'yesterday' / '18 Oct 2026' (waktu lokal), seperti di mockup."""
-    if hasattr(value, "to_datetime"):
-        value = value.to_datetime()
-    if not isinstance(value, datetime):
-        return "-"
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    local = value.astimezone()
-    days = (datetime.now().astimezone().date() - local.date()).days
-    if days == 0:
-        return f"today, {local:%H:%M}"
-    if days == 1:
-        return "yesterday"
-    return f"{local:%d %b %Y}"
+# status cerita disimpan dalam bahasa Inggris (Draft/Ongoing/...); ini hanya teks tampilannya
+_STATUS_ID = {"Draft": "Draf", "Ongoing": "Berjalan", "Complete": "Selesai", "Hiatus": "Hiatus"}
+
+
+def status_label(status: str) -> str:
+    return tr(status, _STATUS_ID.get(status, status))
+
+
+def status_badge(status: str) -> str:
+    status = str(status or "-")
+    return badge(status_label(status), BADGE_TONE.get(status.lower(), "grey"))
 
 
 def page_header(title: str, sub: str = "", kicker: str = "") -> None:
@@ -182,14 +192,15 @@ def breadcrumb(parts: list[tuple[str, Any]], key: str) -> None:
                 st.markdown(f'<span class="bc-current">{html.escape(label)}</span>', unsafe_allow_html=True)
 
 
-DISCLAIMER = (
-    "FanMeta tidak berafiliasi dengan Archive of Our Own (AO3) atau Organization for "
-    "Transformative Works. Istilah metadata mengikuti skema AO3."
-)
+def disclaimer() -> str:
+    return tr("FanMeta is not affiliated with Archive of Our Own (AO3) or the Organization for Transformative "
+              "Works. Metadata terms follow the AO3 schema.",
+              "FanMeta tidak berafiliasi dengan Archive of Our Own (AO3) atau Organization for Transformative "
+              "Works. Istilah metadata mengikuti skema AO3.")
 
 
 def render_footer() -> None:
-    st.markdown(f'<div class="app-footer">{DISCLAIMER}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="app-footer">{disclaimer()}</div>', unsafe_allow_html=True)
 
 
 def default_name(user: dict[str, str]) -> str:
@@ -208,17 +219,17 @@ def rating_badge(rating: str) -> str:
     return badge(text, BADGE_TONE.get(str(rating).strip().lower(), "grey"))
 
 
-# (label, halaman tujuan, halaman yang membuat menu ini aktif, key session yang direset saat diklik)
+# (label EN, label ID, halaman tujuan, halaman yang membuat menu ini aktif, key session yang direset saat diklik)
 _NAV_USER = [
-    ("Quick Analysis", "analysis", ("analysis", "processing", "results"), None),
-    ("Workspace", "workspace", ("workspace",), "ws_view"),
-    ("History", "history", ("history",), "history_detail"),
+    ("Quick Analysis", "Analisis Cepat", "analysis", ("analysis", "processing", "results"), None),
+    ("Workspace", "Workspace", "workspace", ("workspace",), "ws_view"),
+    ("History", "Riwayat", "history", ("history",), "history_detail"),
 ]
 # tamu: Quick Analysis meminta login dulu (seperti mockup); logo FanMeta kembali ke Home
-_NAV_GUEST = [("Quick Analysis", "analysis", ("analysis",), None)]
+_NAV_GUEST = [("Quick Analysis", "Analisis Cepat", "analysis", ("analysis",), None)]
 GUEST_ONLY_LOGIN = {"analysis"}
-_NAV_GALLERY = ("Gallery", "gallery", ("gallery", "work"), "gallery_work")
-_NAV_GLOSSARY = ("Glossary", "glossary", ("glossary",), None)
+_NAV_GALLERY = ("Gallery", "Galeri", "gallery", ("gallery", "work"), "gallery_work")
+_NAV_GLOSSARY = ("Glossary", "Glosarium", "glossary", ("glossary",), None)
 
 
 def _display_name(user: dict[str, str]) -> tuple[str, str]:
@@ -254,7 +265,7 @@ def render_topbar(user: dict[str, str] | None) -> None:
 
 
 def _topbar_row(user: dict[str, str] | None, page: str, items: list, logo_html: str) -> None:
-    brand, nav, right = st.columns([1.3, 3, 1.3], vertical_alignment="center")
+    brand, nav, right = st.columns([1.15, 2.9, 1.75], vertical_alignment="center")
     with brand:
         with st.container(horizontal=True, gap="small", vertical_alignment="center"):
             st.markdown(f'<span class="topbar-marker"></span><span class="tb-logo">{logo_html}</span>',
@@ -263,25 +274,48 @@ def _topbar_row(user: dict[str, str] | None, page: str, items: list, logo_html: 
                       args=("analysis" if user else "home",))
     with nav:
         with st.container(horizontal=True, horizontal_alignment="center", gap="medium"):
-            for label, target, active_pages, reset_key in items:
-                _nav_button(label, target, page in active_pages, reset_key)
-            if user and st.button("Logout", key="nav_logout"):
+            for label_en, label_id, target, active_pages, reset_key in items:
+                _nav_button(tr(label_en, label_id), target, page in active_pages, reset_key)
+            if user and st.button(tr("Logout", "Keluar"), key="nav_logout"):
                 _confirm_logout()
     with right:
         with st.container(horizontal=True, horizontal_alignment="right", vertical_alignment="center", gap="small"):
+            render_preferences("tb")
             if user:
                 name, initials = _display_name(user)
                 st.markdown(f'<div class="tb-user"><span>{html.escape(name)}</span>'
                             f'<span class="tb-avatar" title="{html.escape(user.get("email", ""))}">'
                             f"{html.escape(initials)}</span></div>", unsafe_allow_html=True)
             else:
-                st.button("Log in", key="tb_login", type="tertiary", on_click=navigate_cb, args=("login",))
-                st.button("Get started", key="tb_register", type="primary", on_click=navigate_cb, args=("register",))
+                st.button(tr("Log in", "Masuk"), key="tb_login", type="tertiary", on_click=navigate_cb,
+                          args=("login",))
+                st.button(tr("Get started", "Daftar"), key="tb_register", type="primary", on_click=navigate_cb,
+                          args=("register",))
+
+
+def _on_lang_change(key: str) -> None:
+    value = st.session_state.get(key)
+    if value:  # klik ulang pilihan yang aktif = tidak memilih apa-apa; abaikan
+        set_lang(value.lower())
+
+
+def render_preferences(prefix: str) -> None:
+    """Tombol EN | ID dan tombol terang/gelap (dipakai di menu atas dan halaman login/register)."""
+    key = f"{prefix}_lang"
+    st.session_state[key] = lang().upper()  # selalu ikut pilihan terakhir (bisa diubah dari halaman lain)
+    st.segmented_control(tr("Language", "Bahasa"), ["EN", "ID"], key=key, label_visibility="collapsed",
+                         on_change=_on_lang_change, args=(key,), width="content")
+    dark = theme() == "dark"
+    st.button("", key=f"{prefix}_theme", icon=":material/light_mode:" if dark else ":material/dark_mode:",
+              type="tertiary", help=tr("Switch to light mode", "Ganti ke mode terang") if dark
+              else tr("Switch to dark mode", "Ganti ke mode gelap"), on_click=toggle_theme)
 
 
 def render_labels(items: list[str], kind: str = "") -> None:
     if not items:
-        st.markdown('<span class="empty-copy">Tidak ada label di atas ambang prediksi.</span>', unsafe_allow_html=True)
+        st.markdown('<span class="empty-copy">' + tr("No label passed the prediction threshold.",
+                                                    "Tidak ada label di atas ambang prediksi.") + "</span>",
+                    unsafe_allow_html=True)
         return
     class_name = f"pill {kind}".strip()
     st.markdown(
@@ -291,10 +325,4 @@ def render_labels(items: list[str], kind: str = "") -> None:
 
 
 def format_created_at(value: Any) -> str:
-    if hasattr(value, "to_datetime"):
-        value = value.to_datetime()
-    if not isinstance(value, datetime):
-        return "Tanggal tidak tersedia"
-    if value.tzinfo is None:
-        value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone().strftime("%d %b %Y, %H:%M")
+    return format_date(value, with_time=True)

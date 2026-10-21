@@ -11,7 +11,7 @@ from src.predictor import FanMetaPredictor
 from src.gallery_store import GalleryStore
 from src.workspace_store import WorkspaceStore
 from src.ui import analysis, gallery, glossary, history, home, login, processing, register, results, workspace
-from src.ui.components import GALLERY_ENABLED, render_footer, render_topbar
+from src.ui.components import GALLERY_ENABLED, render_footer, render_topbar, tr
 
 GUEST_PAGES = {"home", "gallery", "work", "glossary", "login", "register"}
 from src.ui.styles import apply_theme
@@ -396,12 +396,13 @@ def main() -> None:
     apply_theme()
     api_key = get_firebase_api_key()
     if api_key is None:
-        st.error("Firebase belum dikonfigurasi. Tambahkan `firebase.api_key` ke Streamlit secrets.")
+        st.error(tr("Firebase is not configured. Add `firebase.api_key` to Streamlit secrets.",
+                    "Firebase belum dikonfigurasi. Tambahkan `firebase.api_key` ke Streamlit secrets."))
         return
     try:
         authenticator = get_authenticator(api_key)
     except ValueError:
-        st.error("Konfigurasi Firebase tidak valid.")
+        st.error(tr("The Firebase configuration is invalid.", "Konfigurasi Firebase tidak valid."))
         return
 
     user = st.session_state.get("firebase_user")
@@ -427,7 +428,8 @@ def main() -> None:
         try:
             history_store = get_history_store(service_account)
         except FirestoreHistoryError:
-            st.warning("Firestore tidak dapat dihubungkan. Riwayat sementara tidak tersedia.")
+            st.warning(tr("Could not connect to Firestore. History is temporarily unavailable.",
+                          "Firestore tidak dapat dihubungkan. Riwayat sementara tidak tersedia."))
     gallery_store = GalleryStore(history_store.client) if history_store is not None else None
     workspace_store = WorkspaceStore(history_store.client) if history_store is not None else None
 

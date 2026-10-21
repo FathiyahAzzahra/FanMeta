@@ -15,6 +15,8 @@ from typing import Any
 
 from firebase_admin import firestore
 
+from src.i18n import tr
+
 from src.rich_text import count_words, sanitize_html
 from src.workspace_metadata import aggregate
 
@@ -31,9 +33,10 @@ class WorkspaceError(RuntimeError):
 def _clean_text(value: Any, field: str, label: str, required: bool = False) -> str:
     text = str(value or "").strip()
     if required and not text:
-        raise WorkspaceError(f"{label} wajib diisi.")
+        raise WorkspaceError(tr(f"{label} is required.", f"{label} wajib diisi."))
     if len(text) > LIMITS[field]:
-        raise WorkspaceError(f"{label} maksimal {LIMITS[field]:,} karakter.")
+        raise WorkspaceError(tr(f"{label} can be at most {LIMITS[field]:,} characters.",
+                                f"{label} maksimal {LIMITS[field]:,} karakter."))
     return text
 
 
@@ -43,34 +46,36 @@ def _clean_list(values: Any, label: str) -> list[str]:
         value = " ".join(str(value).split())
         if value and value.lower() not in seen:
             if len(value) > LIMITS["list_item"]:
-                raise WorkspaceError(f"{label}: tiap isian maksimal {LIMITS['list_item']} karakter.")
+                raise WorkspaceError(tr(f"{label}: each entry can be at most {LIMITS['list_item']} characters.",
+                                    f"{label}: tiap isian maksimal {LIMITS['list_item']} karakter."))
             seen.add(value.lower())
             cleaned.append(value)
     if len(cleaned) > LIMITS["list_len"]:
-        raise WorkspaceError(f"{label} maksimal {LIMITS['list_len']} isian.")
+        raise WorkspaceError(tr(f"{label} can have at most {LIMITS['list_len']} entries.",
+                                f"{label} maksimal {LIMITS['list_len']} isian."))
     return cleaned
 
 
 def _check_size(content_html: str) -> None:
     if len(content_html) > MAX_CHAPTER_CHARS:
-        raise WorkspaceError("Bab terlalu panjang. Pecah menjadi beberapa bab.")
+        raise WorkspaceError(tr("This chapter is too long. Split it into several chapters.", "Bab terlalu panjang. Pecah menjadi beberapa bab."))
 
 
 def clean_work(data: dict[str, Any]) -> dict[str, Any]:
     """Validasi isian form cerita dan kembalikan field yang boleh disimpan."""
     if data.get("status") not in STATUSES:
-        raise WorkspaceError("Status tidak valid.")
+        raise WorkspaceError(tr("Invalid status.", "Status tidak valid."))
     if data.get("language") not in LANGUAGES:
-        raise WorkspaceError("Bahasa tidak valid.")
+        raise WorkspaceError(tr("Invalid language.", "Bahasa tidak valid."))
     return {
-        "title": _clean_text(data.get("title"), "title", "Judul", required=True),
+        "title": _clean_text(data.get("title"), "title", tr("Title", "Judul"), required=True),
         "fandom": _clean_text(data.get("fandom"), "fandom", "Fandom", required=True),
-        "characters": _clean_list(data.get("characters"), "Tokoh"),
+        "characters": _clean_list(data.get("characters"), tr("Characters", "Tokoh")),
         "relationships": _clean_list(data.get("relationships"), "Relationship"),
-        "summary": _clean_text(data.get("summary"), "summary", "Ringkasan"),
+        "summary": _clean_text(data.get("summary"), "summary", tr("Summary", "Ringkasan")),
         "language": data["language"],
         "status": data["status"],
-        "notes": _clean_text(data.get("notes"), "notes", "Catatan"),
+        "notes": _clean_text(data.get("notes"), "notes", tr("Notes", "Catatan")),
     }
 
 
@@ -92,13 +97,13 @@ class WorkspaceStore:
                 works.append(item)
             return works
         except Exception as error:
-            raise WorkspaceError("Daftar cerita tidak dapat dimuat.") from error
+            raise WorkspaceError(tr("Your stories could not be loaded.", "Daftar cerita tidak dapat dimuat.")) from error
 
     def get_work(self, uid: str, work_id: str) -> dict[str, Any] | None:
         try:
             snapshot = self._works(uid).document(work_id).get()
         except Exception as error:
-            raise WorkspaceError("Cerita tidak dapat dimuat.") from error
+            raise WorkspaceError(tr("The story could not be loaded.", "Cerita tidak dapat dimuat.")) from error
         if not snapshot.exists:
             return None
         item = snapshot.to_dict() or {}
@@ -114,14 +119,14 @@ class WorkspaceStore:
             ref.set(work)
             return ref.id
         except Exception as error:
-            raise WorkspaceError("Cerita gagal dibuat.") from error
+            raise WorkspaceError(tr("The story could not be created.", "Cerita gagal dibuat.")) from error
 
     def update_work(self, uid: str, work_id: str, data: dict[str, Any]) -> None:
         work = {**clean_work(data), "updated_at": datetime.now(timezone.utc)}
         try:
             self._works(uid).document(work_id).update(work)
         except Exception as error:
-            raise WorkspaceError("Perubahan cerita gagal disimpan.") from error
+            raise WorkspaceError(tr("The story changes could not be saved.", "Perubahan cerita gagal disimpan.")) from error
 
     # ---------- bab ----------
     def _chapters(self, uid: str, work_id: str) -> Any:
@@ -136,7 +141,7 @@ class WorkspaceStore:
                 item["chapter_id"] = snapshot.id
                 chapters.append(item)
         except Exception as error:
-            raise WorkspaceError("Daftar bab tidak dapat dimuat.") from error
+            raise WorkspaceError(tr("The chapters could not be loaded.", "Daftar bab tidak dapat dimuat.")) from error
         chapters.sort(key=lambda c: (c.get("order", 0), str(c.get("created_at"))))
         for number, chapter in enumerate(chapters, start=1):
             chapter["number"] = number
@@ -165,7 +170,7 @@ class WorkspaceStore:
             self._refresh_stats(uid, work_id)
             return ref.id
         except Exception as error:
-            raise WorkspaceError("Bab gagal dibuat.") from error
+            raise WorkspaceError(tr("The chapter could not be created.", "Bab gagal dibuat.")) from error
 
     def update_chapter(self, uid: str, work_id: str, chapter_id: str, *,
                        content_html: str | None = None, title: str | None = None) -> dict[str, Any]:
@@ -177,13 +182,14 @@ class WorkspaceStore:
         if title is not None:
             title = " ".join(str(title).split())
             if len(title) > LIMITS["title"]:
-                raise WorkspaceError(f"Judul bab maksimal {LIMITS['title']} karakter.")
+                raise WorkspaceError(tr(f"Chapter title can be at most {LIMITS['title']} characters.",
+                                        f"Judul bab maksimal {LIMITS['title']} karakter."))
             data["title"] = title
         try:
             self._chapters(uid, work_id).document(chapter_id).update(data)
             self._refresh_stats(uid, work_id)
         except Exception as error:
-            raise WorkspaceError("Bab gagal disimpan.") from error
+            raise WorkspaceError(tr("The chapter could not be saved.", "Bab gagal disimpan.")) from error
         return data
 
     def move_chapter(self, uid: str, work_id: str, chapter_id: str, step: int) -> None:
@@ -200,7 +206,7 @@ class WorkspaceStore:
             batch.update(self._works(uid).document(work_id), {"updated_at": datetime.now(timezone.utc)})
             batch.commit()
         except Exception as error:
-            raise WorkspaceError("Urutan bab gagal diubah.") from error
+            raise WorkspaceError(tr("The chapter order could not be changed.", "Urutan bab gagal diubah.")) from error
 
     def delete_chapter(self, uid: str, work_id: str, chapter_id: str) -> None:
         """Hapus bab. Analisisnya tetap ada di riwayat (log), metadata cerita dihitung ulang."""
@@ -209,7 +215,7 @@ class WorkspaceStore:
             self._refresh_stats(uid, work_id)
             self.refresh_metadata(uid, work_id)
         except Exception as error:
-            raise WorkspaceError("Bab gagal dihapus.") from error
+            raise WorkspaceError(tr("The chapter could not be deleted.", "Bab gagal dihapus.")) from error
 
     # ---------- analisis ----------
     def set_chapter_analysis(self, uid: str, work_id: str, chapter_id: str, analysis: dict[str, Any]) -> None:
@@ -219,7 +225,7 @@ class WorkspaceStore:
                                                                       "last_analyzed_at": analysis["analyzed_at"]})
             self.refresh_metadata(uid, work_id)
         except Exception as error:
-            raise WorkspaceError("Hasil analisis bab gagal disimpan.") from error
+            raise WorkspaceError(tr("The chapter analysis could not be saved.", "Hasil analisis bab gagal disimpan.")) from error
 
     def unlink_analysis(self, uid: str, work_id: str, chapter_id: str, analysis_id: str) -> None:
         """Dipanggil saat analisis Workspace dihapus dari History: kalau itu analisis terakhir bab,
@@ -233,7 +239,7 @@ class WorkspaceStore:
                 ref.update({"analysis": firestore.DELETE_FIELD, "last_analyzed_at": None})
                 self.refresh_metadata(uid, work_id)
         except Exception as error:
-            raise WorkspaceError("Status analisis bab gagal diperbarui.") from error
+            raise WorkspaceError(tr("The chapter analysis status could not be updated.", "Status analisis bab gagal diperbarui.")) from error
 
     def refresh_metadata(self, uid: str, work_id: str) -> dict[str, Any] | None:
         metadata = aggregate(self.list_chapters(uid, work_id))
@@ -254,4 +260,4 @@ class WorkspaceStore:
                 snapshot.reference.delete()
             ref.delete()
         except Exception as error:
-            raise WorkspaceError("Cerita gagal dihapus.") from error
+            raise WorkspaceError(tr("The story could not be deleted.", "Cerita gagal dihapus.")) from error

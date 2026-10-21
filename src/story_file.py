@@ -5,6 +5,8 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree
 
+from src.i18n import tr
+
 MAX_FILE_BYTES = 5 * 1024 * 1024  # cerita 3.500 kata jauh di bawah 1 MB
 _W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
@@ -19,7 +21,7 @@ def _read_txt(data: bytes) -> str:
             return data.decode(encoding)
         except UnicodeDecodeError:
             continue
-    raise StoryFileError("File .txt tidak dapat dibaca. Simpan ulang file dengan encoding UTF-8.")
+    raise StoryFileError(tr("The .txt file could not be read. Save it again with UTF-8 encoding.", "File .txt tidak dapat dibaca. Simpan ulang file dengan encoding UTF-8."))
 
 
 def _read_docx(data: bytes) -> str:
@@ -28,7 +30,7 @@ def _read_docx(data: bytes) -> str:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             root = ElementTree.fromstring(archive.read("word/document.xml"))
     except (zipfile.BadZipFile, KeyError, ElementTree.ParseError) as error:
-        raise StoryFileError("File .docx rusak atau bukan dokumen Word.") from error
+        raise StoryFileError(tr("The .docx file is damaged or is not a Word document.", "File .docx rusak atau bukan dokumen Word.")) from error
 
     paragraphs = []
     for paragraph in root.iter(f"{_W}p"):
@@ -49,15 +51,15 @@ def _read_docx(data: bytes) -> str:
 def read_story_file(file_name: str, data: bytes) -> str:
     """Kembalikan isi cerita sebagai teks biasa."""
     if len(data) > MAX_FILE_BYTES:
-        raise StoryFileError("File terlalu besar (maksimal 5 MB).")
+        raise StoryFileError(tr("The file is too large (maximum 5 MB).", "File terlalu besar (maksimal 5 MB)."))
     suffix = Path(file_name).suffix.lower()
     if suffix == ".txt":
         text = _read_txt(data)
     elif suffix == ".docx":
         text = _read_docx(data)
     else:
-        raise StoryFileError("Format file tidak didukung. Gunakan .txt atau .docx.")
+        raise StoryFileError(tr("Unsupported file type. Use .txt or .docx.", "Format file tidak didukung. Gunakan .txt atau .docx."))
     text = text.replace("\r\n", "\n").strip()
     if not text:
-        raise StoryFileError("File tidak berisi teks.")
+        raise StoryFileError(tr("The file contains no text.", "File tidak berisi teks."))
     return text

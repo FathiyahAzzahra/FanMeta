@@ -10,7 +10,8 @@ from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ct
 
 from src.firestore_history import FirestoreHistory, FirestoreHistoryError
 from src.predictor import FanMetaPredictor
-from src.ui.components import navigate
+from src.ui.analysis import draft_language_label
+from src.ui.components import navigate, tr
 
 
 def _panel_html(items: list[tuple[str, str, str]], percent: int) -> str:
@@ -22,8 +23,8 @@ def _panel_html(items: list[tuple[str, str, str]], percent: int) -> str:
     )
     return (
         '<div class="processing-panel">'
-        '<div class="pp-head"><span class="pp-spin"></span><b>Processing Narrative</b></div>'
-        f'<div class="pp-sub">{percent}% complete</div>'
+        f'<div class="pp-head"><span class="pp-spin"></span><b>{tr("Processing Narrative", "Memproses Cerita")}</b></div>'
+        f'<div class="pp-sub">{percent}% {tr("complete", "selesai")}</div>'
         f'<div class="pp-bar"><div style="width:{percent}%"></div></div>'
         '<hr class="pp-line">'
         f"{rows}</div>"
@@ -65,9 +66,9 @@ def _start_job(draft: dict, load_predictor: Callable[[], FanMetaPredictor]) -> d
 @st.fragment(run_every=0.7)
 def _progress(job: dict, steps: list, draft: dict, user: dict, history_store: FirestoreHistory | None) -> None:
     if job["error"]:
-        st.error("Analisis gagal dijalankan. Silakan coba lagi.")
+        st.error(tr("The analysis could not be run. Please try again.", "Analisis gagal dijalankan. Silakan coba lagi."))
         st.caption(job["error"])
-        if st.button("Back to editor", key="proc_back"):
+        if st.button(tr("Back to editor", "Kembali ke editor"), key="proc_back"):
             st.session_state.pop("proc_job", None)
             navigate("analysis")
         return
@@ -119,15 +120,25 @@ def render(user: dict[str, str], history_store: FirestoreHistory | None,
     paragraphs = len([p for p in re.split(r"\n\s*\n", story) if p.strip()])
 
     steps = [
-        ("Reading Draft Story Content", f"Loaded {words} words successfully.", "Loading your draft."),
-        ("Processing Text Structures", f"Parsed {paragraphs} paragraph(s).",
-         "Parsing text and loading the AI engine (first run takes longer)."),
+        (tr("Reading Draft Story Content", "Membaca Isi Draf"),
+         tr(f"Loaded {words} words successfully.", f"{words} kata berhasil dimuat."),
+         tr("Loading your draft.", "Memuat drafmu.")),
+        (tr("Processing Text Structures", "Memproses Struktur Teks"),
+         tr(f"Parsed {paragraphs} paragraph(s).", f"{paragraphs} paragraf diproses."),
+         tr("Parsing text and loading the AI engine (first run takes longer).",
+            "Memecah teks dan memuat mesin AI (proses pertama lebih lama).")),
         (
-            "Translating Indonesian Phrases" if is_id else "Translation Check",
-            "Translation complete." if is_id else "Draft is already in English.",
-            "Standardizing terminology into English fandom tropes..." if is_id else "Checking draft language.",
+            tr("Translating Indonesian Phrases", "Menerjemahkan Teks Indonesia") if is_id
+            else tr("Translation Check", "Pemeriksaan Terjemahan"),
+            tr("Translation complete.", "Terjemahan selesai.") if is_id
+            else tr("Draft is already in English.", "Draf sudah berbahasa Inggris."),
+            tr("Standardizing terminology into English fandom tropes...",
+               "Menerjemahkan istilah ke trope fandom bahasa Inggris...") if is_id
+            else tr("Checking draft language.", "Memeriksa bahasa draf."),
         ),
-        ("Generating Metadata Recommendations", "Metadata ready.", "Extracting fandom targets, ratings, and tags."),
+        (tr("Generating Metadata Recommendations", "Membuat Rekomendasi Metadata"),
+         tr("Metadata ready.", "Metadata siap."),
+         tr("Extracting fandom targets, ratings, and tags.", "Menentukan rating, warning, dan tag.")),
     ]
 
     job = st.session_state.get("proc_job")
@@ -140,18 +151,19 @@ def render(user: dict[str, str], history_store: FirestoreHistory | None,
         st.markdown(
             f"""
             <span class="analysis-marker"></span><span class="processing-marker"></span>
-            <div class="page-title proc-title">{html.escape(title or 'Untitled Draft')} <span>(Analyzing...)</span></div>
-            <p class="page-sub">Draft editor is locked while the semantic engine processes your narrative structure.</p>
+            <div class="page-title proc-title">{html.escape(title or tr('Untitled Draft', 'Draf Tanpa Judul'))} <span>({tr('Analyzing...', 'Menganalisis...')})</span></div>
+            <p class="page-sub">{tr('Draft editor is locked while the semantic engine processes your narrative structure.',
+                                     'Editor draf dikunci selama mesin AI memproses ceritamu.')}</p>
             """,
             unsafe_allow_html=True,
         )
         c_title, c_lang = st.columns([3, 1], gap="medium")
         with c_title:
-            st.text_input("Story Title", value=title, disabled=True, key="proc_title")
+            st.text_input(tr("Story Title", "Judul Cerita"), value=title, disabled=True, key="proc_title")
         with c_lang:
-            st.text_input("Draft Language", value="Indonesian" if is_id else "English",
-                            disabled=True, key="proc_language")
-        st.text_area("Story Text", value=story, height=300, disabled=True, key="proc_story")
+            st.text_input(tr("Draft Language", "Bahasa Draf"), value=draft_language_label(draft["language"]),
+                          disabled=True, key="proc_language")
+        st.text_area(tr("Story Text", "Teks Cerita"), value=story, height=300, disabled=True, key="proc_story")
 
     with status_col:
         _progress(job, steps, draft, user, history_store)
