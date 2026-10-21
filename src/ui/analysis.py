@@ -109,7 +109,7 @@ def render(_user: dict[str, str], _history_store: FirestoreHistory | None) -> No
             <div class="quick-guide">
                 <div class="qg-head"><span class="qg-icon">▯</span><span>Writer’s Quick Guide</span></div>
                 <p class="qg-intro">FanMeta reads your story and recommends the metadata you fill in when
-                posting a work on Archive of Our Own (AO3). The title is saved, but only the story text is analyzed.</p>
+                posting a work on Archive of Our Own (AO3) or the other Publication Platforms. The title is saved, but only the story text is analyzed.</p>
                 <hr class="qg-divider">
                 <div class="qg-item"><h5>Content Rating</h5>
                     <p>One of four AO3 ratings: General Audiences, Teen And Up Audiences, Mature, or Explicit.</p></div>

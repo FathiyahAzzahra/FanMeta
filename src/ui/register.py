@@ -15,7 +15,8 @@ def render(authenticator: FirebaseAuth) -> None:
         auth_layout.form_title("Create an account", "Join the future of fanfiction archiving with automated, high-precision tagging.")
 
         with st.form("register_form", border=False):
-            email = st.text_input("Username or Email", key="register_email", placeholder="e.g. author_apprentice@fanmeta.ai")
+            email = st.text_input("Username or Email", key="register_email", placeholder="e.g. author_apprentice@fanmeta.ai",
+                                  autocomplete="username")
             password = st.text_input("Password", type="password", key="register_password", placeholder="Choose a secure password")
             st.markdown("<div class='auth-hint'>Must be at least 8 characters with numbers and symbols.</div>", unsafe_allow_html=True)
             confirm_password = st.text_input("Confirm Password", type="password", key="register_confirm", placeholder="Retype your spell")

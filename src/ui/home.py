@@ -64,8 +64,7 @@ def render(user: dict[str, str] | None, gallery: GalleryStore | None) -> None:
             st.markdown(
                 f"""
                 <div class="hero-art" style="background-image:url('{art}')">
-                  <div class="hero-sample"><div class="hero-sample-top"><span>{html.escape(title)}</span>
-                    {badge("AI suggestions", "violet")}</div><div class="hero-sample-tags">{chips}</div></div>
+
                 </div>
                 """,
                 unsafe_allow_html=True,

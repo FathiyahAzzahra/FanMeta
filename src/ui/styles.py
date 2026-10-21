@@ -333,39 +333,46 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.summary-marker) {
 
 
 /* ===== 6d. HISTORY PAGE ===== */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-search-marker),
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-table-marker) {
+.st-key-hist_search,
+div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-search-marker) {  /* penanda lama dipakai galeri */
     background:#fff; border:1px solid var(--line) !important; border-radius:12px;
 }
-.hist-filter-label { font-size:.82rem; font-weight:600; color:var(--ink); text-align:right; }
-.ht-head { font-size:.68rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; padding:.2rem 0; }
-.ht-title { font-size:.9rem; font-weight:700; color:var(--ink); }
-.ht-cell { font-size:.85rem; color:var(--muted); }
-.ht-empty { font-size:.85rem; color:var(--muted); padding:.6rem 0; }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-table-marker) div[data-testid="stHorizontalBlock"] {
-    border-top:1px solid #eeedf4; padding-top:.45rem;
-}
+.hist-filter-label { font-size:.88rem; font-weight:600; color:var(--ink); text-align:right; }
+/* tabel riwayat (mockup "Analysis History"): kartu putih, judul kolom abu-abu, garis antar baris */
+.st-key-ht_table { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; margin-top:.4rem; }
+.st-key-ht_header { background:#fafbfd; padding:.85rem 1.5rem; }
+/* garis di atas tiap baris (tiap baris dibungkus sendiri oleh Streamlit, jadi :last-child tidak bisa dipakai) */
+[class*="st-key-ht_row_"] { border-top:1px solid var(--line); padding:.8rem 1.5rem; }
+.st-key-ht_table p { margin:0 !important; }
+[class*="st-key-ht_row_"]:hover { background:#fafaff; }
+/* Streamlit memberi margin -16px di bawah markdown; di tabel ini isinya <div>, jadi margin itu dinolkan */
+.st-key-ht_table [data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"]:has(.hist-filter-label) { margin-bottom:0 !important; }
+.ht-head { font-size:.75rem; font-weight:600; text-transform:uppercase; letter-spacing:.03em; color:#8a8fa3; }
+.ht-title { font-size:.95rem; font-weight:600; color:var(--ink); line-height:1.4; }
+.ht-cell { font-size:.92rem; color:#374151; }
+.ht-empty { font-size:.9rem; color:var(--muted); padding:1.2rem 1.5rem; }
 .rating-badge { display:inline-block; padding:.12rem .5rem; border-radius:5px; font-size:.72rem; font-weight:600; background:#f1f3f7; color:#374151; }
 .rb-general { background:#e0f2fe; color:#0369a1; }
 .rb-teen { background:#ebeaff; color:#5b54e6; }
 .rb-mature { background:#ffefdc; color:#b4470f; }
 .rb-explicit { background:#fee2e2; color:#b91c1c; }
 
-/* tombol "View Details" dan "Back to History" tampil seperti tautan */
-[class*="st-key-hist_view_"] button, .st-key-hist_back button {
+/* tombol "Back to History" tampil seperti tautan */
+.st-key-hist_back button {
     background:transparent !important; border:0 !important; box-shadow:none !important;
     padding:0 !important; min-height:0 !important; justify-content:flex-start;
 }
-[class*="st-key-hist_view_"] button p, .st-key-hist_back button p {
-    color:var(--violet) !important; font-size:.85rem !important; font-weight:600;
+.st-key-hist_back button p { color:var(--ink) !important; font-size:.85rem !important; font-weight:600; }
+/* aksi tabel riwayat: ikon mata biru (lihat detail) & tong sampah merah (hapus) */
+[class*="st-key-hist_view_"] button, [class*="st-key-hist_del_"] button {
+    width:36px; height:36px; min-height:36px !important; padding:0 !important; border-radius:8px !important;
+    background:transparent !important; border:0 !important; box-shadow:none !important; justify-content:center;
 }
-.st-key-hist_back button p { color:var(--ink) !important; }
-[class*="st-key-hist_del_"] button {
-    background:transparent !important; border:0 !important; box-shadow:none !important;
-    padding:0 !important; min-height:0 !important;
-}
-[class*="st-key-hist_del_"] button p { color:#dc2626 !important; font-size:.85rem !important; font-weight:600; }
-[class*="st-key-hist_del_"] button:hover p { text-decoration:underline; }
+[class*="st-key-hist_view_"] button [data-testid="stIconMaterial"] { color:#2563eb !important; font-size:21px !important; }
+[class*="st-key-hist_del_"] button [data-testid="stIconMaterial"] { color:#d04452 !important; font-size:21px !important; }
+[class*="st-key-hist_view_"] button:hover { background:#eff6ff !important; }
+[class*="st-key-hist_del_"] button:hover { background:#fff0f1 !important; }
 
 .pub-status { font-size:.8rem; font-weight:600; color:#15803d; margin:.2rem 0 .1rem; }
 .st-key-work_unpublish button {
@@ -538,7 +545,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.ws-section-marker) div[data
 .gl-jump { display:flex; gap:2rem; flex-wrap:wrap; border-bottom:1px solid var(--line); margin:.6rem 0 1.6rem; }
 .stApp .gl-jump a { color:#202033; text-decoration:none; font-size:.95rem; font-weight:500; padding:.2rem 0 .8rem; border-bottom:2px solid transparent; }
 .stApp .gl-jump a:hover { color:var(--violet); border-bottom-color:var(--violet); }
-.stApp h2.gl-h2 { display:flex; align-items:center; gap:.7rem; font-size:1.55rem; font-weight:600; color:var(--ink); margin:0 0 .35rem; padding:0; scroll-margin-top:1rem; }
+.stApp .gl-h2 { display:flex; align-items:center; gap:.7rem; font-size:1.55rem; font-weight:600; color:var(--ink); margin:0 0 .35rem; padding:0; scroll-margin-top:1rem; }
 .gl-count { font-size:.78rem; font-weight:600; color:#4b5563; background:#f3f4f6; border-radius:6px; padding:.2rem .55rem; }
 .stApp .gl-lead { font-size:.95rem; color:var(--muted); margin:0 0 1.1rem; line-height:1.55; }
 .gl-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1.1rem; margin-bottom:2.4rem; }
@@ -561,7 +568,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.ws-section-marker) div[data
 .gl-note { display:flex; gap:.6rem; align-items:flex-start; font-size:.88rem; color:#b86010; background:#fff3e5; border-radius:10px; padding:.85rem 1rem; line-height:1.55; }
 .gl-note svg { flex:none; margin-top:.15rem; }
 .gl-how { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.8fr); gap:2.5rem; background:#efeeff; border-radius:14px; padding:2rem 2.2rem; margin:.4rem 0 1rem; scroll-margin-top:1rem; }
-.stApp .gl-how-left h2.gl-h2 { margin:.8rem 0 .5rem; }
+.stApp .gl-how-left .gl-h2 { margin:.8rem 0 .5rem; }
 .stApp .gl-how-left p { font-size:.95rem; color:#374151; line-height:1.6; margin:0; }
 .gl-how-right { display:flex; flex-direction:column; gap:1.1rem; }
 .gl-step { display:flex; gap:.9rem; align-items:flex-start; }
@@ -575,7 +582,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.ws-section-marker) div[data
 /* catatan panjang cerita di bawah editor */
 .editor-footer { display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; }
 .len-warn { color:#b4470f; font-weight:500; }
-[class*="st-key-hist_view_"] button:hover p, .st-key-hist_back button:hover p { text-decoration:underline; color:var(--violet) !important; }
+.st-key-hist_back button:hover p { text-decoration:underline; color:var(--violet) !important; }
 
 .sum-snippet { font-size:.82rem; font-style:italic; color:var(--muted); line-height:1.55; }
 .st-key-res_rerun button {
@@ -889,6 +896,20 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.form-card-marker) {
 .cta-t { font-size:1.45rem; color:#202033; }
 .cta-s { font-size:.95rem; color:#505365; margin-top:.4rem; }
 /* ===== /C HOME ===== */
+/* ===== HISTORY PAGER ===== */
+/* pagination tabel History */
+.st-key-ht_footer { border-top:1px solid var(--line); padding:.75rem 1.5rem; }
+.ht-count { font-size:.86rem; color:var(--muted); white-space:nowrap; }
+.ht-count b { color:var(--ink); font-weight:600; }
+[class*="st-key-hist_pg"] button { min-width:34px; height:34px; min-height:34px !important; padding:0 .6rem !important;
+  border-radius:8px !important; border:1px solid var(--line) !important; background:#fff !important; box-shadow:none !important; }
+[class*="st-key-hist_pg"] button p { font-size:.86rem !important; font-weight:500; color:var(--ink) !important; }
+[class*="st-key-hist_pg"] button:hover:not(:disabled) { border-color:#c7c3ff !important; background:#f7f6ff !important; }
+[class*="st-key-hist_pgc_"] button { background:#efeeff !important; border-color:#c7c3ff !important; }
+[class*="st-key-hist_pgc_"] button p { color:var(--violet) !important; font-weight:700; }
+[class*="st-key-hist_pg"] button:disabled { opacity:.45; }
+.st-key-hist_page_size_w [data-baseweb="select"] > div { min-height:34px; }
+/* ===== /HISTORY PAGER ===== */
 </style>
 """
 

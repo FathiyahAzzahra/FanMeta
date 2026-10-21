@@ -15,8 +15,12 @@ def render(authenticator: FirebaseAuth) -> None:
         auth_layout.form_title("Welcome back", "Sign in to generate tags and polish your latest story draft.")
 
         with st.form("login_form", border=False):
-            email = st.text_input("Username or Email", key="login_email", placeholder="e.g. writer.work@fanmeta.ai")
-            password = st.text_input("Password", type="password", key="login_password", placeholder="Enter your secret spell")
+            # autocomplete: supaya browser menawarkan email & password yang pernah disimpan
+            # (bawaan Streamlit untuk password = "new-password", yang membuat browser menganggap ini form daftar)
+            email = st.text_input("Username or Email", key="login_email", placeholder="e.g. writer.work@fanmeta.ai",
+                                  autocomplete="username")
+            password = st.text_input("Password", type="password", key="login_password", placeholder="Enter your secret spell",
+                                     autocomplete="current-password")
             submitted = st.form_submit_button("Login to Workspace", use_container_width=True)
 
         if submitted:

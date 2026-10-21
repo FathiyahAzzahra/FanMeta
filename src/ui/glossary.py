@@ -80,7 +80,7 @@ STEPS = [
 
 def _section(title: str, count: str = "", anchor: str = "") -> str:
     pill = f'<span class="gl-count">{html.escape(count)}</span>' if count else ""
-    return f'<h2 class="gl-h2" id="{anchor}">{html.escape(title)}{pill}</h2>'
+    return f'<div class="gl-h2" id="{anchor}">{html.escape(title)}{pill}</div>'
 
 
 def _rating_cards() -> str:
@@ -123,7 +123,7 @@ def _steps_panel() -> str:
         for i, (t, d) in enumerate(STEPS, start=1)
     )
     return (f'<div class="gl-how" id="gl-how"><div class="gl-how-left">{icon("sparkles", 22, "#635BFF")}'
-            '<h2 class="gl-h2">Behind the suggestions</h2>'
+            '<div class="gl-h2">Behind the suggestions</div>'
             "<p>Suggestions are a starting point, not a verdict. You know your story best, so always review "
             f'them before posting on AO3.</p></div><div class="gl-how-right">{steps}</div></div>')
 
