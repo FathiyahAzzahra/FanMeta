@@ -14,7 +14,8 @@ from src.firestore_history import FirestoreHistory, FirestoreHistoryError, probs
 from src.rich_text import text_to_html
 from src.workspace_metadata import text_hash
 from src.workspace_store import LIMITS, STATUSES, WorkspaceError, WorkspaceStore
-from src.ui.components import LANGUAGE_LABEL
+from src.i18n import language_label
+from src.ui.components import open_dialog, status_label, tr
 
 _EXISTING, _NEW = "Existing story", "New story"
 
@@ -60,51 +61,67 @@ def attach_to_chapter(user: dict[str, str], store: WorkspaceStore, history_store
 
 
 def _chapter_label(c: dict[str, Any]) -> str:
-    return f"Ch {c['number']} · {c.get('title') or 'Untitled chapter'}"
+    return tr("Ch", "Bab") + f" {c['number']} · {c.get('title') or tr('Untitled chapter', 'Bab tanpa judul')}"
 
 
-@st.dialog("Save to Workspace", icon=":material/create_new_folder:")
-def save_to_workspace_dialog(user: dict[str, str], store: WorkspaceStore, history_store: FirestoreHistory,
-                             item: dict[str, Any]) -> None:
+def save_to_workspace_dialog(*args: Any) -> None:
+    open_dialog(tr("Save to Workspace", "Simpan ke Workspace"), ":material/create_new_folder:", _save_body, *args)
+
+
+def _save_body(user: dict[str, str], store: WorkspaceStore, history_store: FirestoreHistory,
+               item: dict[str, Any]) -> None:
     language = str(item.get("language") or "Bahasa Inggris")
     try:
         works = [w for w in store.list_works(user["uid"]) if w.get("language") == language]
     except WorkspaceError as error:
         st.error(str(error)); return
-    st.markdown('<p class="dlg-text">Keep these results with your story so you can find them again, alongside your '
-                "chapters and notes.</p>", unsafe_allow_html=True)
+    st.markdown('<p class="dlg-text">' + tr(
+        "Keep these results with your story so you can find them again, alongside your chapters and notes.",
+        "Simpan hasil ini bersama ceritamu supaya mudah ditemukan lagi, berdampingan dengan bab dan catatanmu.")
+        + "</p>", unsafe_allow_html=True)
     options = [_EXISTING, _NEW] if works else [_NEW]
-    mode = st.segmented_control("Where", options, default=options[0], key="stw_mode",
+    mode = st.segmented_control(tr("Where", "Tujuan"), options, default=options[0], key="stw_mode",
+                                format_func=lambda v: tr(v, {"Existing story": "Cerita yang ada",
+                                                             "New story": "Cerita baru"}[v]),
                                 label_visibility="collapsed", width="stretch") or options[0]
 
     if mode == _NEW:
-        title = st.text_input("Story title *", value=str(item.get("title") or "")[:LIMITS["title"]],
+        title = st.text_input(tr("Story title *", "Judul cerita *"), value=str(item.get("title") or "")[:LIMITS["title"]],
                               max_chars=LIMITS["title"])
-        fandom = st.text_input("Fandom *", max_chars=LIMITS["fandom"], placeholder="e.g. One Piece")
-        status = st.selectbox("Status", STATUSES, index=0)
-        st.markdown(f'<p class="dlg-note">The analyzed text becomes Chapter 1. Language: '
-                    f"{LANGUAGE_LABEL.get(language, language)} (same as this analysis).</p>", unsafe_allow_html=True)
+        fandom = st.text_input("Fandom *", max_chars=LIMITS["fandom"], placeholder=tr("e.g. One Piece", "mis. One Piece"))
+        status = st.selectbox("Status", STATUSES, index=0, format_func=status_label)
+        st.markdown('<p class="dlg-note">' + tr(
+            f"The analyzed text becomes Chapter 1. Language: {language_label(language)} (same as this analysis).",
+            f"Teks yang dianalisis menjadi Bab 1. Bahasa: {language_label(language)} (sama dengan analisis ini).")
+            + "</p>", unsafe_allow_html=True)
         target = chapter = None
     else:
-        target = st.selectbox("Story", works, format_func=lambda w: f"{w.get('title')}  ·  {w.get('fandom') or 'No fandom'}"
-                              f" · {w.get('status')} · {int(w.get('chapter_count') or 0)} chapter(s)")
+        target = st.selectbox(tr("Story", "Cerita"), works, format_func=lambda w: (
+            f"{w.get('title')}  ·  {w.get('fandom') or tr('No fandom', 'Tanpa fandom')} · {status_label(w.get('status'))}"
+            f" · {int(w.get('chapter_count') or 0)} " + tr("chapter(s)", "bab")))
         try:
             chapters = store.list_chapters(user["uid"], target["work_id"])
         except WorkspaceError as error:
             st.error(str(error)); return
         if not chapters:
-            st.info("This story has no chapters yet. Add a chapter first, or choose New story.")
+            st.info(tr("This story has no chapters yet. Add a chapter first, or choose New story.",
+                       "Cerita ini belum punya bab. Tambahkan bab dulu, atau pilih Cerita baru."))
             chapter = None
         else:
-            chapter = st.selectbox("Save results to", chapters, index=len(chapters) - 1, format_func=_chapter_label)
-        st.markdown('<p class="dlg-note">Updates analysis results only. Your chapter text and private notes won\'t '
-                    "change. If the chapter text differs from the analyzed text, the chapter is marked "
-                    "<b>Changed</b> so you can re-analyze it.</p>", unsafe_allow_html=True)
+            chapter = st.selectbox(tr("Save results to", "Simpan hasil ke"), chapters, index=len(chapters) - 1,
+                                   format_func=_chapter_label)
+        st.markdown('<p class="dlg-note">' + tr(
+            "Updates analysis results only. Your chapter text and private notes won't change. If the chapter text "
+            "differs from the analyzed text, the chapter is marked <b>Changed</b> so you can re-analyze it.",
+            "Hanya hasil analisis yang diperbarui. Teks bab dan catatan pribadimu tidak berubah. Kalau teks bab "
+            "berbeda dengan teks yang dianalisis, bab ditandai <b>Berubah</b> supaya bisa dianalisis ulang.")
+            + "</p>", unsafe_allow_html=True)
 
     with st.container(horizontal=True, horizontal_alignment="right"):
-        if st.button("Cancel", key="stw_cancel"):
+        if st.button(tr("Cancel", "Batal"), key="stw_cancel"):
             st.rerun()
-        if st.button("Save to Workspace", key="stw_ok", type="primary", disabled=mode == _EXISTING and chapter is None):
+        if st.button(tr("Save to Workspace", "Simpan ke Workspace"), key="stw_ok", type="primary",
+                     disabled=mode == _EXISTING and chapter is None):
             try:
                 if mode == _NEW:
                     work_id = store.create_work(user["uid"], {"title": title, "fandom": fandom, "language": language,
@@ -115,6 +132,6 @@ def save_to_workspace_dialog(user: dict[str, str], store: WorkspaceStore, histor
                     attach_to_chapter(user, store, history_store, item, work_id, chapter["chapter_id"])
             except (WorkspaceError, FirestoreHistoryError) as error:
                 st.error(str(error)); return
-            st.session_state["ws_toast"] = "Hasil analisis disimpan ke Workspace."
+            st.session_state["ws_toast"] = tr("Analysis results saved to Workspace.", "Hasil analisis disimpan ke Workspace.")
             open_story(work_id)
             st.rerun()

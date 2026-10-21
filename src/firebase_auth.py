@@ -4,6 +4,8 @@ from typing import Any
 
 import requests
 
+from src.i18n import tr
+
 
 class FirebaseAuthError(RuntimeError):
     """A user-safe authentication error returned by Firebase."""
@@ -33,7 +35,7 @@ class FirebaseAuth:
                 timeout=15,
             )
         except requests.RequestException as error:
-            raise FirebaseAuthError("Tidak dapat terhubung ke layanan autentikasi.") from error
+            raise FirebaseAuthError(tr("Could not connect to the authentication service.", "Tidak dapat terhubung ke layanan autentikasi.")) from error
 
         payload: dict[str, Any] = response.json() if response.content else {}
         if not response.ok:
@@ -41,7 +43,7 @@ class FirebaseAuth:
             raise FirebaseAuthError(f"Firebase error: {code}")
 
         if not all(key in payload for key in ("localId", "email", "idToken")):
-            raise FirebaseAuthError("Respons autentikasi tidak lengkap.")
+            raise FirebaseAuthError(tr("The authentication response was incomplete.", "Respons autentikasi tidak lengkap."))
 
         return {
             "uid": str(payload["localId"]),
@@ -53,14 +55,14 @@ class FirebaseAuth:
 def _friendly_error(code: str) -> str:
     """Avoid showing raw Firebase errors or sensitive request details in the UI."""
     messages = {
-        "EMAIL_EXISTS": "Email tersebut sudah terdaftar.",
-        "EMAIL_NOT_FOUND": "Email atau password tidak valid.",
-        "INVALID_PASSWORD": "Email atau password tidak valid.",
-        "INVALID_LOGIN_CREDENTIALS": "Email atau password tidak valid.",
+        "EMAIL_EXISTS": tr("That email is already registered.", "Email tersebut sudah terdaftar."),
+        "EMAIL_NOT_FOUND": tr("Invalid email or password.", "Email atau password tidak valid."),
+        "INVALID_PASSWORD": tr("Invalid email or password.", "Email atau password tidak valid."),
+        "INVALID_LOGIN_CREDENTIALS": tr("Invalid email or password.", "Email atau password tidak valid."),
         "WEAK_PASSWORD : Password should be at least 6 characters": (
-            "Password minimal harus terdiri dari 6 karakter."
+            tr("Password must be at least 6 characters.", "Password minimal harus terdiri dari 6 karakter.")
         ),
-        "OPERATION_NOT_ALLOWED": "Login email/password belum diaktifkan di Firebase.",
-        "TOO_MANY_ATTEMPTS_TRY_LATER": "Terlalu banyak percobaan. Silakan coba lagi nanti.",
+        "OPERATION_NOT_ALLOWED": tr("Email/password sign-in is not enabled in Firebase.", "Login email/password belum diaktifkan di Firebase."),
+        "TOO_MANY_ATTEMPTS_TRY_LATER": tr("Too many attempts. Please try again later.", "Terlalu banyak percobaan. Silakan coba lagi nanti."),
     }
-    return messages.get(code, "Autentikasi gagal. Silakan coba lagi.")
+    return messages.get(code, tr("Authentication failed. Please try again.", "Autentikasi gagal. Silakan coba lagi."))

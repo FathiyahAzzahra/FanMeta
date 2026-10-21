@@ -6,6 +6,8 @@ from typing import Any
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+from src.i18n import tr
+
 
 PROBABILITY_FIELDS = ("rating_probabilities", "warning_probabilities", "tag_probabilities")
 
@@ -50,7 +52,7 @@ class FirestoreHistory:
                 )
             return cls(firestore.client(app=app))
         except Exception as error:
-            raise FirestoreHistoryError("Riwayat analisis tidak dapat terhubung.") from error
+            raise FirestoreHistoryError(tr("Could not connect to the analysis history.", "Riwayat analisis tidak dapat terhubung.")) from error
 
     def save_analysis(
         self,
@@ -106,7 +108,7 @@ class FirestoreHistory:
             document.set(data)
             return str(document.id)
         except Exception as error:
-            raise FirestoreHistoryError("Riwayat analisis gagal disimpan.") from error
+            raise FirestoreHistoryError(tr("The analysis could not be saved to history.", "Riwayat analisis gagal disimpan.")) from error
 
     def list_for_work(self, firebase_uid: str, work_id: str) -> list[dict[str, Any]]:
         """Semua analisis Workspace milik satu cerita (log), terlama dulu."""
@@ -124,7 +126,7 @@ class FirestoreHistory:
                 item["analysis_id"] = snapshot.id
                 items.append(rows_to_probs(item))
         except Exception as error:
-            raise FirestoreHistoryError("Log analisis tidak dapat dimuat.") from error
+            raise FirestoreHistoryError(tr("The analysis log could not be loaded.", "Log analisis tidak dapat dimuat.")) from error
         # diurutkan di aplikasi supaya tidak perlu membuat composite index di Firestore
         return sorted(items, key=lambda i: i.get("created_at") or datetime.min.replace(tzinfo=timezone.utc))
 
@@ -140,7 +142,7 @@ class FirestoreHistory:
                 .update({k: v for k, v in fields.items() if k in allowed})
             )
         except Exception as error:
-            raise FirestoreHistoryError("Analisis gagal dipindahkan ke Workspace.") from error
+            raise FirestoreHistoryError(tr("The analysis could not be moved to Workspace.", "Analisis gagal dipindahkan ke Workspace.")) from error
 
     def delete_analysis(self, firebase_uid: str, analysis_id: str) -> None:
         """Permanently remove one history document of the active user."""
@@ -153,7 +155,7 @@ class FirestoreHistory:
                 .delete()
             )
         except Exception as error:
-            raise FirestoreHistoryError("Riwayat analisis gagal dihapus.") from error
+            raise FirestoreHistoryError(tr("The analysis could not be deleted.", "Riwayat analisis gagal dihapus.")) from error
 
     def get_analysis(self, firebase_uid: str, analysis_id: str) -> dict[str, Any] | None:
         """Return one history document of the active user, or None if it does not exist."""
@@ -166,7 +168,7 @@ class FirestoreHistory:
                 .get()
             )
         except Exception as error:
-            raise FirestoreHistoryError("Detail riwayat tidak dapat dimuat.") from error
+            raise FirestoreHistoryError(tr("The analysis details could not be loaded.", "Detail riwayat tidak dapat dimuat.")) from error
         if not snapshot.exists:
             return None
         item = snapshot.to_dict() or {}
@@ -190,4 +192,4 @@ class FirestoreHistory:
                 history.append(item)
             return history
         except Exception as error:
-            raise FirestoreHistoryError("Riwayat analisis tidak dapat dimuat.") from error
+            raise FirestoreHistoryError(tr("The analysis history could not be loaded.", "Riwayat analisis tidak dapat dimuat.")) from error
