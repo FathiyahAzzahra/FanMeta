@@ -1,0 +1,2 @@
+# Script shell harus memakai baris Linux (LF) supaya bisa jalan di container.
+*.sh text eol=lf

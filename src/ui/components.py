@@ -11,11 +11,13 @@ from typing import Any
 import streamlit as st
 from PIL import Image
 
-from src.i18n import (  # noqa: F401 - format_relative/format_date juga dipakai modul lain lewat sini
+from src.core.i18n import (  # noqa: F401 - format_relative/format_date juga dipakai modul lain lewat sini
     format_date, format_relative, lang, set_lang, theme, toggle_theme, tr,
 )
+from src.ml.model_api import is_remote
 
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"  # src/assets
 
 # ubah ke False untuk menyembunyikan seluruh fitur galeri publik (menu, Publish, tombol Read)
 GALLERY_ENABLED = False
@@ -42,29 +44,26 @@ def navigate_cb(page: str) -> None:
 
 @st.cache_data(show_spinner=False, max_entries=16)
 def asset_data_uri(stem: str, max_px: int | None = None) -> str:
-    """Cari src/asset/<stem>.(png|jpg|jpeg|webp) dan kembalikan sebagai data URI.
+    """Cari src/assets/<stem>.(png|jpg|jpeg|webp) dan kembalikan sebagai data URI.
 
     Hasilnya di-cache. ``max_px`` memperkecil gambar (sisi terpanjang) supaya data yang dikirim
     ke browser setiap kali halaman dijalankan ulang tetap kecil (foto asli ±1 MB).
     """
-    roots = [Path.cwd() / "src" / "asset", Path.cwd() / "asset"]
-    roots += [p / "asset" for p in Path(__file__).resolve().parents]
-    for root in roots:
-        for ext, mime in _MIME.items():
-            path = root / f"{stem}{ext}"
-            if not path.exists():
-                continue
-            data = path.read_bytes()
-            if max_px:
-                with Image.open(io.BytesIO(data)) as img:
-                    img.thumbnail((max_px, max_px))
-                    out = io.BytesIO()
-                    if mime == "image/png":
-                        img.save(out, format="PNG", optimize=True)
-                    else:
-                        img.convert("RGB").save(out, format="JPEG", quality=82, optimize=True)
-                    data = out.getvalue()
-            return f"data:{mime};base64," + base64.b64encode(data).decode()
+    for ext, mime in _MIME.items():
+        path = ASSETS_DIR / f"{stem}{ext}"
+        if not path.exists():
+            continue
+        data = path.read_bytes()
+        if max_px:
+            with Image.open(io.BytesIO(data)) as img:
+                img.thumbnail((max_px, max_px))
+                out = io.BytesIO()
+                if mime == "image/png":
+                    img.save(out, format="PNG", optimize=True)
+                else:
+                    img.convert("RGB").save(out, format="JPEG", quality=82, optimize=True)
+                data = out.getvalue()
+        return f"data:{mime};base64," + base64.b64encode(data).decode()
     return ""
 
 
@@ -203,6 +202,30 @@ def render_footer() -> None:
     st.markdown(f'<div class="app-footer">{disclaimer()}</div>', unsafe_allow_html=True)
 
 
+def device_note_html(use_gpu: bool = False, device: tuple[str, str] | None = None) -> str:
+    """Catatan kecil perangkat yang menjalankan model: GPU (cepat) atau CPU (bisa lama).
+
+    Berupa HTML supaya bisa diletakkan di dalam panel progres (bukan kotak terpisah di bawahnya).
+    Mode Space: mengikuti pilihan CPU/GPU pengguna. Mode lokal: ``device`` dari job latar
+    (``model_api.engine_device()``); selama model masih dimuat nilainya None dan catatan belum tampil.
+    Fungsi ini sengaja tidak mengimpor torch, supaya halaman tidak tertahan saat model pertama kali dimuat.
+    """
+    if is_remote():
+        kind, name = ("gpu", "ZeroGPU") if use_gpu else ("cpu", "")
+    elif device is None:
+        return ""
+    else:
+        kind, name = device
+    if kind == "gpu":
+        text = tr(f"Running on GPU ({name}).", f"Berjalan dengan GPU ({name}).")
+        return f'<div class="dev-note dev-gpu">{icon("check", 16, "#16a34a")}<span>{html.escape(text)}</span></div>'
+    text = tr("Running on CPU, so the analysis may take a while. Indonesian stories take the longest "
+              "because they are translated first.",
+              "Berjalan dengan CPU, jadi analisis bisa agak lama. Cerita bahasa Indonesia paling lama "
+              "karena diterjemahkan dulu.")
+    return f'<div class="dev-note">{icon("clock", 16, "#635BFF")}<span>{html.escape(text)}</span></div>'
+
+
 def default_name(user: dict[str, str]) -> str:
     email = user.get("email", "") or ""
     return user.get("display_name") or user.get("name") or (email.split("@")[0] if email else "User")
@@ -221,6 +244,7 @@ def rating_badge(rating: str) -> str:
 
 # (label EN, label ID, halaman tujuan, halaman yang membuat menu ini aktif, key session yang direset saat diklik)
 _NAV_USER = [
+    ("Home", "Beranda", "home", ("home",), None),
     ("Quick Analysis", "Analisis Cepat", "analysis", ("analysis", "processing", "results"), None),
     ("Workspace", "Workspace", "workspace", ("workspace",), "ws_view"),
     ("History", "Riwayat", "history", ("history",), "history_detail"),
@@ -251,7 +275,7 @@ def _nav_button(label: str, target: str, active: bool, reset_key: str | None = N
 
 
 def render_topbar(user: dict[str, str] | None) -> None:
-    page = st.session_state.get("page", "analysis" if user else "home")
+    page = st.session_state.get("page", "home")
     items = list(_NAV_USER if user else _NAV_GUEST)
     if GALLERY_ENABLED:
         items.append(_NAV_GALLERY)
@@ -271,9 +295,9 @@ def _topbar_row(user: dict[str, str] | None, page: str, items: list, logo_html: 
             st.markdown(f'<span class="topbar-marker"></span><span class="tb-logo">{logo_html}</span>',
                         unsafe_allow_html=True)
             st.button("FanMeta", key="tb_brand", type="tertiary", on_click=navigate_cb,
-                      args=("analysis" if user else "home",))
+                      args=("home",))
     with nav:
-        with st.container(horizontal=True, horizontal_alignment="center", gap="medium"):
+        with st.container(key="tb_nav", horizontal=True, horizontal_alignment="center", gap="medium"):
             for label_en, label_id, target, active_pages, reset_key in items:
                 _nav_button(tr(label_en, label_id), target, page in active_pages, reset_key)
             if user and st.button(tr("Logout", "Keluar"), key="nav_logout"):
@@ -291,6 +315,46 @@ def _topbar_row(user: dict[str, str] | None, page: str, items: list, logo_html: 
                           args=("login",))
                 st.button(tr("Get started", "Daftar"), key="tb_register", type="primary", on_click=navigate_cb,
                           args=("register",))
+            _mobile_menu(user, page, items)
+    if st.session_state.pop("tb_logout_requested", False):
+        _confirm_logout()
+
+
+def _menu_go(target: str, reset_key: str | None) -> None:
+    """Callback menu ☰ (layar HP): pindah halaman lalu tutup menunya."""
+    if reset_key:
+        st.session_state.pop(reset_key, None)
+    if target in GUEST_ONLY_LOGIN and not st.session_state.get("firebase_user"):
+        st.session_state["after_login"] = target
+        target = "login"
+    st.session_state["page"] = target
+    st.session_state["tb_menu"] = False
+
+
+def _menu_logout() -> None:
+    # pop-up tidak bisa dibuka dari callback, jadi ditandai dulu lalu dibuka saat topbar digambar
+    st.session_state["tb_menu"] = False
+    st.session_state["tb_logout_requested"] = True
+
+
+def _mobile_menu(user: dict[str, str] | None, page: str, items: list) -> None:
+    """Menu ☰ untuk layar sempit. Di desktop disembunyikan lewat CSS (styles.py, blok MOBILE)."""
+    with st.popover(tr("Menu", "Menu"), icon=":material/menu:", key="tb_menu", on_change="rerun"):
+        if user:
+            name, _ = _display_name(user)
+            st.markdown(f'<div class="mb-user"><b>{html.escape(name)}</b>'
+                        f'<span>{html.escape(user.get("email", ""))}</span></div>', unsafe_allow_html=True)
+        for label_en, label_id, target, active_pages, reset_key in items:
+            st.button(tr(label_en, label_id), key=f"mnav_{target}" + ("_active" if page in active_pages else ""),
+                      type="tertiary", width="stretch", on_click=_menu_go, args=(target, reset_key))
+        if user:
+            st.button(tr("Logout", "Keluar"), key="mnav_logout", type="tertiary", width="stretch",
+                      on_click=_menu_logout)
+        else:
+            st.button(tr("Log in", "Masuk"), key="mnav_login", width="stretch", on_click=_menu_go,
+                      args=("login", None))
+            st.button(tr("Get started", "Daftar"), key="mnav_register", type="primary", width="stretch",
+                      on_click=_menu_go, args=("register", None))
 
 
 def _on_lang_change(key: str) -> None:

@@ -1,0 +1,17 @@
+# Sama dengan yang tidak di-upload ke Space (lihat deploy_hf_space.py)
+.git/
+.venv/
+venv/
+**/__pycache__/
+.streamlit/secrets.toml
+.env
+*.env
+*serviceAccount*.json
+*firebase-adminsdk*.json
+*.pem
+checkpoints/*.pt
+mock_up/
+.claude/
+.agents/
+.vscode/
+*.log

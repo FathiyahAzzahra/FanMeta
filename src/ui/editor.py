@@ -10,7 +10,7 @@ from typing import Any
 
 import streamlit as st
 
-from src.i18n import is_id, tr
+from src.core.i18n import is_id, tr
 
 _SVG = ('<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" '
         'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{}</svg>')

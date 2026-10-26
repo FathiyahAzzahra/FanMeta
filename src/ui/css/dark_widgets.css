@@ -1,0 +1,71 @@
+/* Pop-up (st.dialog) dirender di luar .stApp (portal di <body>), jadi aturan widget memakai
+   :is(.stApp, [role="dialog"]) supaya kolom isian, dropdown, dan tombol pilihan di pop-up ikut gelap. */
+:root { color-scheme:dark; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] { background:var(--canvas) !important; color:var(--ink); }
+:is(.stApp, [role="dialog"]) [data-testid="stWidgetLabel"] p, :is(.stApp, [role="dialog"]) [data-testid="stText"] { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stCaptionContainer"], :is(.stApp, [role="dialog"]) [data-testid="stCaptionContainer"] p { color:#a3a6c2 !important; }
+:is(.stApp, [role="dialog"]) input, :is(.stApp, [role="dialog"]) textarea { color:var(--ink) !important; -webkit-text-fill-color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) input::placeholder, :is(.stApp, [role="dialog"]) textarea::placeholder { color:#8b8fae !important; -webkit-text-fill-color:#8b8fae !important; }
+:is(.stApp, [role="dialog"]) [data-baseweb="input"], :is(.stApp, [role="dialog"]) [data-baseweb="base-input"], :is(.stApp, [role="dialog"]) [data-baseweb="textarea"],
+:is(.stApp, [role="dialog"]) [data-baseweb="select"] > div, :is(.stApp, [role="dialog"]) [data-testid="stTextInputRootElement"] {
+    background:#1f2238 !important; border-color:#3a3f63 !important; }
+:is(.stApp, [role="dialog"]) [data-baseweb="select"] svg, :is(.stApp, [role="dialog"]) [data-testid="stTextInputRootElement"] [data-testid="stIconMaterial"] { color:#a3a6c2 !important; }
+[data-baseweb="popover"] [data-baseweb="menu"], [data-baseweb="popover"] ul, [data-baseweb="popover"] > div > div {
+    background:#1f2238 !important; }
+[data-baseweb="popover"] li { color:var(--ink) !important; background:transparent !important; }
+[data-baseweb="popover"] li:hover, [data-baseweb="popover"] li[aria-selected="true"] { background:#2a2752 !important; }
+:is(.stApp, [role="dialog"]) [data-baseweb="tag"] { background:#2a2752 !important; }
+:is(.stApp, [role="dialog"]) [data-baseweb="tag"] span, :is(.stApp, [role="dialog"]) [data-baseweb="tag"] svg { color:var(--ink) !important; }
+[data-baseweb="tooltip"] > div, [data-testid="stTooltipContent"] { background:#262a43 !important; color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stExpander"] details { border-color:#2c3050 !important; background:#181a2e !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary, :is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary p,
+:is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary [data-testid="stIconMaterial"] { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary:hover { background:#1f2238 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stVerticalBlockBorderWrapper"] { border-color:#2c3050 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"] { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"]:has([data-testid="stAlertContentInfo"]) { background:#172a45 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"]:has([data-testid="stAlertContentError"]) { background:#3b1d24 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"]:has([data-testid="stAlertContentWarning"]) { background:#3a2a17 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"]:has([data-testid="stAlertContentSuccess"]) { background:#15322a !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"] p { color:var(--ink) !important; }
+[data-testid="stToast"] { background:#262a43 !important; color:var(--ink) !important; }
+[data-testid="stToast"] p { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stFileUploaderDropzone"] { background:#1f2238 !important; border-color:#3a3f63 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stFileUploaderDropzone"] span, :is(.stApp, [role="dialog"]) [data-testid="stFileUploaderDropzone"] small,
+:is(.stApp, [role="dialog"]) [data-testid="stFileUploaderDropzone"] svg { color:#a3a6c2 !important; }
+:is(.stApp, [role="dialog"]) button[kind="segmented_control"] { background:#1f2238 !important; border-color:#3a3f63 !important; color:#c9cbe0 !important; }
+:is(.stApp, [role="dialog"]) button[kind="segmented_controlActive"] { background:#2a2752 !important; border-color:#4a4590 !important; color:#a5a0ff !important; }
+:is(.stApp, [role="dialog"]) button[kind="segmented_control"] p, :is(.stApp, [role="dialog"]) button[kind="segmented_controlActive"] p { color:inherit !important; }
+:is(.stApp, [role="dialog"]) .stButton > button[kind="tertiary"], :is(.stApp, [role="dialog"]) .stButton > button[kind="tertiary"] p { color:var(--ink); }
+[role="dialog"] button[aria-label="Close"] svg, [role="dialog"] button[aria-label="Close"] { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) .stButton > button:disabled { opacity:.5; }
+.app-footer { border-top-color:#2c3050 !important; }
+/* Streamlit 1.64 memakai komponen react-aria (bukan baseweb) untuk dropdown & tombol pilihan */
+html, body { background:var(--canvas) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stSelectbox"] [role="group"], :is(.stApp, [role="dialog"]) [data-testid="stMultiSelect"] [role="group"] {
+    background:#1f2238 !important; border-color:#3a3f63 !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stSelectbox"] button svg, :is(.stApp, [role="dialog"]) [data-testid="stMultiSelect"] button svg { color:#a3a6c2 !important; }
+[data-testid*="VirtualDropdown"] { background:#1f2238 !important; border-color:#3a3f63 !important; }
+[role="listbox"] [role="option"] { color:var(--ink) !important; }
+[role="listbox"] [role="option"][data-focused="true"], [role="listbox"] [role="option"]:hover { background:#2a2752 !important; }
+[role="listbox"] [role="option"][aria-selected="true"] { background:#262a43 !important; }
+:is(.stApp, [role="dialog"]) button[data-variant="segmented_control"] { background:#1f2238 !important; border-color:#3a3f63 !important; color:#c9cbe0 !important; }
+:is(.stApp, [role="dialog"]) button[data-variant="segmented_control"][data-selected="true"] {
+    background:#2a2752 !important; border-color:#4a4590 !important; color:#a5a0ff !important; }
+:is(.stApp, [role="dialog"]) button[data-variant="segmented_control"] span { color:inherit !important; }
+/* kotak bergaris (st.container(border=True)) & garis pemisah <hr> bawaan Streamlit */
+:is(.stApp, [role="dialog"]) [data-testid="stVerticalBlock"] { border-color:#2c3050; }
+:is(.stApp, [role="dialog"]) hr { border-color:#2c3050 !important; }
+/* kolom yang diisi otomatis oleh browser (email/password tersimpan): Chrome memberi latar biru muda,
+   jadi teks terang tidak terlihat. Latar ditimpa dengan bayangan ke dalam (cara yang dihormati Chrome). */
+:is(.stApp, [role="dialog"]) input:-webkit-autofill, :is(.stApp, [role="dialog"]) input:-webkit-autofill:hover, :is(.stApp, [role="dialog"]) input:-webkit-autofill:focus,
+:is(.stApp, [role="dialog"]) input:-webkit-autofill:active {
+    -webkit-text-fill-color:var(--ink) !important; caret-color:var(--ink);
+    -webkit-box-shadow:0 0 0 1000px #1f2238 inset !important; box-shadow:0 0 0 1000px #1f2238 inset !important;
+    transition:background-color 9999s ease-out 0s; }
+/* judul bab di editor tetap tanpa kotak, sama seperti mode terang */
+:is(.stApp, [role="dialog"]) .st-key-ch_head [data-testid="stTextInputRootElement"] { background:transparent !important; }
+/* pop-up bawaan Streamlit (mis. "Connection error"): teks & kotak kode memakai warna tema terang.
+   :where() membuat aturan teks ini paling lemah, jadi warna khusus di pop-up buatan sendiri tetap menang. */
+:where([role="dialog"]) :is(p, li) { color:var(--ink); }
+[role="dialog"] pre, [role="dialog"] pre code { background:#1f2238 !important; color:var(--ink) !important; }
