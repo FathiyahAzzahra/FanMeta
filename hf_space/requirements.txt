@@ -1,9 +1,11 @@
-# Library untuk Space model (Gradio + ZeroGPU, Python 3.12).
-# torch 2.13: versi terbaru yang tercantum didukung ZeroGPU (aplikasi lokal memakai 2.14).
-# gradio dipasang oleh Space sesuai sdk_version di README.md.
+# Library untuk Space model (Gradio, Python 3.12). Berlaku untuk hardware ZeroGPU maupun CPU Basic.
+# gradio dan spaces dipasang sendiri oleh platform, jadi jangan dikunci di sini
+# (spaces==0.51.2 di sini bentrok dengan spaces==0.51.3 milik platform -> build gagal, 27 Okt).
+# torch tetap ditulis: ZeroGPU menyediakan torch<=2.13.0 sendiri, tetapi CPU Basic tidak
+# (tanpa baris ini Space CPU Basic gagal: "No module named 'torch'", 27 Okt).
+# torch 2.13 di Space vs 2.14 di aplikasi lokal: checkpoint & hasil sama (diuji lokal).
 torch==2.13.0
 transformers==5.17.0
 huggingface_hub==1.31.0
-spaces==0.51.2
 numpy==2.4.6
 pandas==3.0.5

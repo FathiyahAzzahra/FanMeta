@@ -18,12 +18,12 @@ def render(authenticator: FirebaseAuth) -> None:
                                   "Bergabunglah dan beri tag fanfiksimu secara otomatis dan akurat."))
 
         with st.form("register_form", border=False):
-            email = st.text_input(tr("Username or Email", "Username atau Email"), key="register_email",
+            email = st.text_input("Email", key="register_email",
                                   placeholder="e.g. author_apprentice@fanmeta.ai", autocomplete="username")
             password = st.text_input("Password", type="password", key="register_password",
                                      placeholder=tr("Choose a secure password", "Pilih password yang aman"))
-            st.markdown("<div class='auth-hint'>" + tr("Must be at least 8 characters with numbers and symbols.",
-                                                       "Minimal 8 karakter, berisi angka dan simbol.") + "</div>",
+            st.markdown("<div class='auth-hint'>" + tr("Must be at least 6 characters.",
+                                                       "Minimal 6 karakter.") + "</div>",
                         unsafe_allow_html=True)
             confirm_password = st.text_input(tr("Confirm Password", "Ulangi Password"), type="password",
                                              key="register_confirm",

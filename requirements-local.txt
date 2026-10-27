@@ -1,0 +1,8 @@
+# Library untuk menjalankan aplikasi + model di laptop (Python 3.11): pip install -r requirements-local.txt
+# Isinya = library server tampilan (requirements.txt) + library model.
+#
+# torch di sini versi CPU. Untuk GPU NVIDIA, setelah perintah di atas pasang ulang torch versi CUDA
+# dari https://pytorch.org (pilih Windows + Pip + CUDA). Menjalankan perintah di atas lagi akan
+# mengembalikan torch ke versi CPU.
+-r requirements.txt
+transformers==5.17.0

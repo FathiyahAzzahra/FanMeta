@@ -8,6 +8,7 @@ import streamlit as st
 from src.services.firestore_history import FirestoreHistory
 
 from src.ml import fanmeta_utils as U
+from src.core.i18n import pct
 from src.ui.components import navigate, tr
 
 NONE_WARNING = "no archive warnings apply"
@@ -43,7 +44,7 @@ _LOW_RATIO = 0.6  # rasio kata EN/ID di bawah ini dianggap terjemahan terlalu pe
 
 
 def _pct(value: float | None) -> str:
-    return f"{value * 100:.1f}% {tr('Confidence', 'Keyakinan')}" if value is not None else ""
+    return f"{pct(value)} {tr('Confidence', 'Keyakinan')}" if value is not None else ""
 
 
 def _bars(probs: dict[str, float], chosen: list[str], order: list[str] | None = None) -> str:
@@ -55,8 +56,8 @@ def _bars(probs: dict[str, float], chosen: list[str], order: list[str] | None = 
         cls = "cb-row cb-on" if label in chosen else "cb-row"
         rows.append(
             f'<div class="{cls}"><span class="cb-label">{html.escape(label)}</span>'
-            f'<span class="cb-track"><span style="width:{p * 100:.1f}%"></span></span>'
-            f'<span class="cb-val">{p * 100:.1f}%</span></div>'
+            f'<span class="cb-track"><span style="width:{p * 100:.1f}%"></span></span>'  # CSS: tetap titik
+            f'<span class="cb-val">{pct(p)}</span></div>'
         )
     return f'<div class="cb-list">{"".join(rows)}</div>'
 

@@ -11,7 +11,8 @@ Logika prediksi tidak ditulis ulang di sini: ``src/ml/predictor.py`` dan ``src/m
 (satu-satunya sumber aturan) ikut di-upload ke Space oleh script deploy.
 """
 
-import spaces  # ZeroGPU: harus di-import sebelum torch
+print("[fanmeta] app.py dimulai", flush=True)
+import spaces  # noqa: E402  ZeroGPU: harus di-import sebelum torch
 
 import os
 import re
@@ -37,12 +38,22 @@ from src.ml.predictor import FanMetaPredictor  # noqa: E402
 ON_ZERO_GPU = os.getenv("SPACES_ZERO_GPU", "").lower() in ("1", "t", "true")
 MAX_GPU_SECONDS = 120
 
+
+def log(message: str) -> None:
+    """Penanda progres di log Space (memuat model tidak mencetak apa pun)."""
+    print(f"[fanmeta {time.strftime('%H:%M:%S')}] {message}", flush=True)
+
+
+log(f"mulai memuat model (ZeroGPU={ON_ZERO_GPU})")
 cpu_predictor = FanMetaPredictor(device="cpu")
+log("model CPU siap")
 gpu_predictor = None
 if ON_ZERO_GPU or torch.cuda.is_available():
     gpu_predictor = FanMetaPredictor(device="cuda")
+    log("model GPU (RoBERTa + LSTM) siap, memuat NLLB")
     # ZeroGPU: model harus sudah di cuda saat start, bukan dimuat di dalam fungsi GPU.
     gpu_predictor._load_nllb()
+    log("NLLB GPU siap")
 
 
 def _normalize_language(language: str) -> str:
@@ -135,4 +146,5 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
+    log("menjalankan Gradio")
     demo.launch()

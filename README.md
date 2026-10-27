@@ -59,7 +59,7 @@ Alur satu permintaan: `app.py` (router) → `src/ui/pages/<halaman>.py` → `src
    ```
    python -m venv .venv
    .venv\Scripts\activate
-   pip install -r requirements.txt
+   pip install -r requirements-local.txt
    ```
 2. Salin file model ke folder `checkpoints/`: `02_roberta_stage1_C.pt` dan `04_lstm_C_seed42.pt` (model final C).
    Pengaturan modelnya (`06_model_app.json`) sudah ada di repo.
@@ -72,32 +72,68 @@ Alur satu permintaan: `app.py` (router) → `src/ui/pages/<halaman>.py` → `src
    Saat pertama kali dijalankan, aplikasi mengunduh tokenizer RoBERTa dan model NLLB-200 dari Hugging Face,
    jadi butuh koneksi internet.
 
-## Deploy (Hugging Face Spaces)
+## Deploy (Streamlit Community Cloud + Hugging Face Space)
 
-Aplikasi di-deploy sebagai Space Docker. File model disimpan di repo model Hugging Face, bukan di GitHub.
-Jika file `.pt` tidak ada di `checkpoints/`, `src/ml/predictor.py` mengunduhnya dari repo
-`ZAaraAa/fanmeta-model` (bisa diganti lewat env `FANMETA_MODEL_REPO`).
+Aplikasi online dipecah menjadi dua bagian, keduanya gratis:
 
-1. Login: `hf auth login` (token **write** dari https://huggingface.co/settings/tokens).
-2. Upload model (sekali saja, ulangi jika model diganti):
+| Bagian | Platform | Isi |
+|---|---|---|
+| Tampilan | Streamlit Community Cloud | `app.py` + `src/` (login, Workspace, History). Tidak memuat model. Library: `requirements.txt`. |
+| Model | Hugging Face Space `ZAaraAa/fanmeta-model-api` (Gradio + ZeroGPU) | `hf_space/` + `src/ml/predictor.py` + `src/ml/fanmeta_utils.py` + `checkpoints/06_model_app.json` |
+| File model | Repo model Hugging Face `ZAaraAa/fanmeta-model` (private) | `02_roberta_stage1_C.pt`, `04_lstm_C_seed42.pt` |
+
+Tampilan memanggil Space lewat `gradio_client` (`src/ml/remote_predictor.py`) kalau Streamlit secrets punya
+bagian `[model_api]`. Tanpa bagian itu (misalnya di laptop), model berjalan langsung di komputer sendiri.
+
+Pengguna memilih **CPU** (bawaan, tidak memakai kuota) atau **GPU** sebelum analisis. GPU memakai kuota ZeroGPU
+akun `ZAaraAa` (akun PRO: 40 menit per hari, pulih 24 jam setelah pemakaian GPU pertama). Kalau kuota habis,
+analisis otomatis dijalankan dengan CPU dan pengguna mendapat pemberitahuan. Perkiraan sisa kuota dicatat di
+Firestore (dokumen `app_state/zerogpu_quota`).
+
+### Pertama kali
+
+1. Login Hugging Face (token **write** dari https://huggingface.co/settings/tokens):
    ```
-   hf repos create ZAaraAa/fanmeta-model --private
-   hf upload ZAaraAa/fanmeta-model checkpoints/02_roberta_stage1_C.pt 02_roberta_stage1_C.pt
-   hf upload ZAaraAa/fanmeta-model checkpoints/04_lstm_C_seed42.pt 04_lstm_C_seed42.pt
+   .venv\Scripts\hf.exe auth login
    ```
-3. Upload aplikasi: `python deploy_hf_space.py` (rahasia, model, dan `mock_up/` tidak ikut).
-4. Di Space > Settings > **Secrets**, tambahkan:
-   - `STREAMLIT_SECRETS`: seluruh isi `.streamlit/secrets.toml`.
-   - `HF_TOKEN`: token **read**, supaya Space bisa mengunduh repo model yang private.
-5. Firebase Console > Authentication > Settings > **Authorized domains**: tambahkan `<nama-space>.hf.space`.
+2. Upload file model ke repo model private:
+   ```
+   python deploy_hf_space.py model
+   ```
+3. Upload Space. Isi dulu `FANMETA_SPACE_HF_TOKEN` dengan token **read** supaya secret `HF_TOKEN` di Space
+   terisi otomatis (dipakai Space untuk mengunduh repo model yang private):
+   ```
+   $env:FANMETA_SPACE_HF_TOKEN = "hf_..."
+   python deploy_hf_space.py space
+   ```
+   Cek di Settings Space: Hardware = **ZeroGPU**, dan secret `HF_TOKEN` ada. Kalau belum, atur manual.
+   Tambahkan `--dry-run` di perintah mana pun untuk melihat daftar file tanpa meng-upload.
+4. Buat aplikasi di https://share.streamlit.io dari repo GitHub ini: branch `prod`, file `app.py`,
+   Advanced settings > Python **3.12**. Di kolom **Secrets**, tempel isi `.streamlit/secrets.toml` (Firebase)
+   ditambah:
+   ```toml
+   [model_api]
+   space = "ZAaraAa/fanmeta-model-api"
+   hf_token = "hf_..."   # token read akun ZAaraAa; kuota GPU dihitung ke akun ini
+   ```
+   Tanpa `hf_token`, ZeroGPU memakai kuota anonim (2 menit per hari, dibagi per IP server).
+
+### Update setelah online
+
+| Yang diubah | Cara update |
+|---|---|
+| Tampilan (`app.py`, `src/ui/`, `src/services/`, `src/core/`) | Commit lalu push ke branch `prod`. Streamlit Cloud memperbarui sendiri. |
+| Cara model berjalan (`src/ml/predictor.py`, `src/ml/fanmeta_utils.py`, `hf_space/`) atau `checkpoints/06_model_app.json` | `python deploy_hf_space.py space` |
+| File model `.pt` | `python deploy_hf_space.py model`, lalu `python deploy_hf_space.py space` (nama file baru di `06_model_app.json`) |
 
 Catatan:
-- Space CPU gratis (2 vCPU) lebih lambat dari laptop, terutama untuk teks Indonesia (NLLB).
-  Untuk demo yang cepat, ganti hardware ke GPU (Settings > Hardware) dan tambahkan variable
-  `TORCH_INDEX_URL=https://pypi.org/simple` supaya torch versi CUDA yang dipasang. Pause Space setelah selesai.
-- Space gratis tidur setelah 48 jam tidak dibuka. Saat bangun, model diunduh ulang (beberapa menit),
-  jadi buka aplikasinya dulu sebelum demo.
-- Mengubah kode: commit ke GitHub seperti biasa, lalu jalankan lagi `python deploy_hf_space.py`.
+- Setiap upload membuat Space build ulang dan restart (beberapa menit). Selama itu analisis online gagal,
+  jadi jangan update tepat sebelum demo. Riwayat upload tersimpan di tab Files Space.
+- Script upload hanya menambah dan menimpa file. File yang dihapus di laptop tetap ada di Space sampai dihapus
+  manual dari tab Files.
+- `src/ml/fanmeta_utils.py` adalah salinan dari folder Training: ubah di sana dulu, salin ke sini, baru upload.
+- Space dan aplikasi Streamlit gratis akan tidur kalau lama tidak dibuka. Buka aplikasinya beberapa menit
+  sebelum dipakai supaya model sudah dimuat.
 
 ## Branch
 

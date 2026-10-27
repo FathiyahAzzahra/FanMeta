@@ -73,6 +73,12 @@ def num(n: int) -> str:
     return text.replace(",", ".") if is_id() else text
 
 
+def pct(p: float) -> str:
+    """Peluang 0–1 sebagai persen satu desimal: 69.6% (EN) / 69,6% (ID). Jangan dipakai untuk CSS."""
+    text = f"{p * 100:.1f}%"
+    return text.replace(".", ",") if is_id() else text
+
+
 def language_label(value: str) -> str:
     """Nilai bahasa yang disimpan ("Bahasa Indonesia"/"Bahasa Inggris") -> teks tampilan."""
     names = {"Bahasa Indonesia": ("Indonesian", "Indonesia"), "Bahasa Inggris": ("English", "Inggris")}

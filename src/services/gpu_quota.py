@@ -8,7 +8,7 @@ Kalau Space melaporkan kuota habis, sisa detik dan waktu reset dari pesan ZeroGP
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-DAILY_GPU_SECONDS = 5 * 60  # kuota harian akun Hugging Face gratis
+DAILY_GPU_SECONDS = 40 * 60  # kuota harian akun Hugging Face PRO (akun gratis: 5 menit, tetapi tidak bisa host ZeroGPU)
 WINDOW = timedelta(hours=24)  # kuota pulih 24 jam setelah pemakaian GPU pertama
 
 

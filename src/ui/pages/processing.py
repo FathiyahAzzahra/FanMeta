@@ -13,6 +13,7 @@ from src.services.firestore_history import FirestoreHistory, FirestoreHistoryErr
 from src.services.gpu_quota import GpuQuota
 from src.ml.model_api import engine_device, is_remote
 from src.ui.pages.analysis import draft_language_label
+from src.core.i18n import num
 from src.ui.components import device_note_html, navigate, tr
 from src.ui.device_choice import fallback_notice
 
@@ -133,7 +134,7 @@ def render(user: dict[str, str], history_store: FirestoreHistory | None,
 
     steps = [
         (tr("Reading Draft Story Content", "Membaca Isi Draf"),
-         tr(f"Loaded {words} words successfully.", f"{words} kata berhasil dimuat."),
+         tr(f"Loaded {num(words)} words successfully.", f"{num(words)} kata berhasil dimuat."),
          tr("Loading your draft.", "Memuat drafmu.")),
         (tr("Processing Text Structures", "Memproses Struktur Teks"),
          tr(f"Parsed {paragraphs} paragraph(s).", f"{paragraphs} paragraf diproses."),

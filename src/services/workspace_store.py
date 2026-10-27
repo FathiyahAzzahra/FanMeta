@@ -15,7 +15,7 @@ from typing import Any
 
 from firebase_admin import firestore
 
-from src.core.i18n import tr
+from src.core.i18n import num, tr
 
 from src.core.rich_text import count_words, sanitize_html
 from src.core.workspace_metadata import aggregate
@@ -35,8 +35,8 @@ def _clean_text(value: Any, field: str, label: str, required: bool = False) -> s
     if required and not text:
         raise WorkspaceError(tr(f"{label} is required.", f"{label} wajib diisi."))
     if len(text) > LIMITS[field]:
-        raise WorkspaceError(tr(f"{label} can be at most {LIMITS[field]:,} characters.",
-                                f"{label} maksimal {LIMITS[field]:,} karakter."))
+        raise WorkspaceError(tr(f"{label} can be at most {num(LIMITS[field])} characters.",
+                                f"{label} maksimal {num(LIMITS[field])} karakter."))
     return text
 
 
