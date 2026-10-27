@@ -20,6 +20,8 @@
 :is(.stApp, [role="dialog"]) [data-testid="stExpander"] details { border-color:#2c3050 !important; background:#181a2e !important; }
 :is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary, :is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary p,
 :is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary [data-testid="stIconMaterial"] { color:var(--ink) !important; }
+:is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary { background:transparent !important; }
+/* saat dibuka, Streamlit memberi judul expander latar terang (#fbfcfe) dari tema terang */
 :is(.stApp, [role="dialog"]) [data-testid="stExpander"] summary:hover { background:#1f2238 !important; }
 :is(.stApp, [role="dialog"]) [data-testid="stVerticalBlockBorderWrapper"] { border-color:#2c3050 !important; }
 :is(.stApp, [role="dialog"]) [data-testid="stAlertContainer"] { color:var(--ink) !important; }

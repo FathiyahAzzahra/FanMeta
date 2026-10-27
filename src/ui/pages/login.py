@@ -20,7 +20,7 @@ def render(authenticator: FirebaseAuth) -> None:
         with st.form("login_form", border=False):
             # autocomplete: supaya browser menawarkan email & password yang pernah disimpan
             # (bawaan Streamlit untuk password = "new-password", yang membuat browser menganggap ini form daftar)
-            email = st.text_input(tr("Username or Email", "Username atau Email"), key="login_email",
+            email = st.text_input("Email", key="login_email",
                                   placeholder="e.g. writer.work@fanmeta.ai", autocomplete="username")
             password = st.text_input("Password", type="password", key="login_password",
                                      placeholder=tr("Enter your secret spell", "Masukkan mantra rahasiamu"),

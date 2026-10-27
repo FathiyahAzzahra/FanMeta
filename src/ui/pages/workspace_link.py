@@ -1,9 +1,10 @@
 """Simpan Analisis Cepat ke Workspace.
 
 - Cerita baru      : teks analisis menjadi Bab 1, hasilnya menjadi analisis bab itu.
-- Cerita yang ada  : hasil analisis dipasang ke bab yang dipilih; TEKS BAB TIDAK BERUBAH.
-                     Kalau teks yang dianalisis berbeda dengan isi bab, bab itu bertanda
-                     "Changed" supaya jelas hasilnya berasal dari teks lain.
+- Cerita yang ada  : pilihan bawaan "Bab baru": teks analisis menjadi bab baru di akhir cerita.
+                     Bisa juga memilih bab lama: hasil analisis dipasang ke bab itu (hasil lama
+                     diganti) dan TEKS BAB TIDAK BERUBAH. Kalau teks yang dianalisis berbeda dengan
+                     isi bab, bab itu bertanda "Changed" supaya jelas hasilnya berasal dari teks lain.
 """
 from datetime import datetime, timezone
 from typing import Any
@@ -18,6 +19,7 @@ from src.core.i18n import language_label
 from src.ui.components import open_dialog, status_label, tr
 
 _EXISTING, _NEW = "Existing story", "New story"
+_NEW_CHAPTER = None  # pilihan "Bab baru" di daftar bab
 
 
 def open_story(work_id: str) -> None:
@@ -49,7 +51,7 @@ def _attach(user: dict[str, str], store: WorkspaceStore, history_store: Firestor
 
 def move_to_new_story(user: dict[str, str], store: WorkspaceStore, history_store: FirestoreHistory,
                       item: dict[str, Any], work_id: str) -> str:
-    """Teks analisis menjadi bab baru (Bab 1 cerita baru), lalu hasilnya dipasang ke bab itu."""
+    """Teks analisis menjadi bab baru di akhir cerita, lalu hasilnya dipasang ke bab itu."""
     chapter_id = store.create_chapter(user["uid"], work_id, text_to_html(str(item.get("story") or "")))
     _attach(user, store, history_store, item, work_id, chapter_id)
     return chapter_id
@@ -103,29 +105,36 @@ def _save_body(user: dict[str, str], store: WorkspaceStore, history_store: Fires
             chapters = store.list_chapters(user["uid"], target["work_id"])
         except WorkspaceError as error:
             st.error(str(error)); return
-        if not chapters:
-            st.info(tr("This story has no chapters yet. Add a chapter first, or choose New story.",
-                       "Cerita ini belum punya bab. Tambahkan bab dulu, atau pilih Cerita baru."))
-            chapter = None
+        next_number = len(chapters) + 1
+        chapter = st.selectbox(tr("Save results to", "Simpan hasil ke"), [_NEW_CHAPTER, *chapters], index=0,
+                               format_func=lambda c: tr(f"+ New chapter (Ch {next_number})",
+                                                        f"+ Bab baru (Bab {next_number})")
+                               if c is _NEW_CHAPTER else _chapter_label(c))
+        if chapter is _NEW_CHAPTER:
+            note = tr(f"The analyzed text becomes Chapter {next_number}, at the end of this story, "
+                      "together with its analysis results.",
+                      f"Teks yang dianalisis menjadi Bab {next_number} di akhir cerita ini, "
+                      "lengkap dengan hasil analisisnya.")
         else:
-            chapter = st.selectbox(tr("Save results to", "Simpan hasil ke"), chapters, index=len(chapters) - 1,
-                                   format_func=_chapter_label)
-        st.markdown('<p class="dlg-note">' + tr(
-            "Updates analysis results only. Your chapter text and private notes won't change. If the chapter text "
-            "differs from the analyzed text, the chapter is marked <b>Changed</b> so you can re-analyze it.",
-            "Hanya hasil analisis yang diperbarui. Teks bab dan catatan pribadimu tidak berubah. Kalau teks bab "
-            "berbeda dengan teks yang dianalisis, bab ditandai <b>Berubah</b> supaya bisa dianalisis ulang.")
-            + "</p>", unsafe_allow_html=True)
+            note = tr("Replaces this chapter's previous analysis results. Your chapter text and private notes won't "
+                      "change. If the chapter text differs from the analyzed text, the chapter is marked "
+                      "<b>Changed</b> so you can re-analyze it.",
+                      "Hasil analisis lama di bab ini akan diganti. Teks bab dan catatan pribadimu tidak berubah. "
+                      "Kalau teks bab berbeda dengan teks yang dianalisis, bab ditandai <b>Berubah</b> supaya bisa "
+                      "dianalisis ulang.")
+        st.markdown(f'<p class="dlg-note">{note}</p>', unsafe_allow_html=True)
 
     with st.container(horizontal=True, horizontal_alignment="right"):
         if st.button(tr("Cancel", "Batal"), key="stw_cancel"):
             st.rerun()
-        if st.button(tr("Save to Workspace", "Simpan ke Workspace"), key="stw_ok", type="primary",
-                     disabled=mode == _EXISTING and chapter is None):
+        if st.button(tr("Save to Workspace", "Simpan ke Workspace"), key="stw_ok", type="primary"):
             try:
                 if mode == _NEW:
                     work_id = store.create_work(user["uid"], {"title": title, "fandom": fandom, "language": language,
                                                               "status": status})
+                    move_to_new_story(user, store, history_store, item, work_id)
+                elif chapter is _NEW_CHAPTER:
+                    work_id = target["work_id"]
                     move_to_new_story(user, store, history_store, item, work_id)
                 else:
                     work_id = target["work_id"]

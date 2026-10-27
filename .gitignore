@@ -32,3 +32,6 @@ checkpoints/*
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# ===== Pengujian (black box, dll.): hanya disimpan di laptop, tidak ikut ke GitHub =====
+tests/

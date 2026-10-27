@@ -1,10 +1,18 @@
-# Versi yang sudah diuji dengan aplikasi ini (Python 3.11).
-# torch dari PyPI = versi CPU. Untuk GPU, pasang torch dari https://pytorch.org sesuai versi CUDA.
+# Library untuk SERVER TAMPILAN (Streamlit Community Cloud), Python 3.11/3.12. Tanpa model:
+# model dijalankan di Space Hugging Face (hf_space/), lihat src/ml/model_api.py.
+# Menjalankan model di laptop: pip install -r requirements-local.txt
+#
+# torch versi CPU (kecil, tanpa CUDA) tetap perlu karena src/ml/fanmeta_utils.py meng-import torch,
+# sedangkan halaman Hasil/Galeri/Workspace memakai daftar label dari file itu
+# (fanmeta_utils.py harus identik dengan salinan di folder Training, jadi tidak diubah).
+# Dipakai --find-links, bukan --extra-index-url: index PyTorch juga berisi requests/numpy versi lama,
+# dan uv (installer Streamlit Cloud) hanya mengambil paket dari index pertama yang memilikinya.
+--find-links https://download.pytorch.org/whl/torch/
 streamlit==1.64.0
-torch==2.14.0
-transformers==5.17.0
-huggingface_hub==1.31.0
+torch==2.14.0+cpu
 firebase-admin==7.6.0
+gradio_client==2.7.2
+huggingface_hub==1.31.0
 requests==2.34.2
 numpy==2.4.6
 pandas==3.0.5

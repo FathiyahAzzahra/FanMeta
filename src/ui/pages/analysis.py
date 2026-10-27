@@ -6,6 +6,7 @@ from src.services.firestore_history import FirestoreHistory
 from src.services.gpu_quota import GpuQuota
 from src.core.story_file import StoryFileError, read_story_file
 from src.ui import device_choice
+from src.core.i18n import num
 from src.ui.components import navigate, tr
 
 _LANG_EN = {"Bahasa Indonesia": "Indonesian", "Bahasa Inggris": "English"}
@@ -48,9 +49,9 @@ def _length_note(words: int) -> str:
     if words <= TRAIN_MAX_WORDS:
         return ""
     return '<span class="len-warn">' + tr(
-        f"This draft is longer than the stories the model was trained on (up to {TRAIN_MAX_WORDS:,} words), "
+        f"This draft is longer than the stories the model was trained on (up to {num(TRAIN_MAX_WORDS)} words), "
         "so results may be less reliable.",
-        f"Draf ini lebih panjang dari cerita yang dipakai melatih model (maksimal {TRAIN_MAX_WORDS:,} kata), "
+        f"Draf ini lebih panjang dari cerita yang dipakai melatih model (maksimal {num(TRAIN_MAX_WORDS)} kata), "
         "jadi hasilnya bisa kurang akurat.") + "</span>"
 
 
@@ -103,8 +104,8 @@ def render(_user: dict[str, str], history_store: FirestoreHistory | None) -> Non
             )
             words = len(story.split())
             st.markdown(
-                f"<div class='editor-footer'><span>{tr('Words', 'Kata')}: <b>{words:,}</b>&nbsp;&nbsp; "
-                f"{tr('Characters', 'Karakter')}: <b>{len(story):,}</b></span>"
+                f"<div class='editor-footer'><span>{tr('Words', 'Kata')}: <b>{num(words)}</b>&nbsp;&nbsp; "
+                f"{tr('Characters', 'Karakter')}: <b>{num(len(story))}</b></span>"
                 f"{_length_note(words)}</div>",
                 unsafe_allow_html=True,
             )

@@ -603,9 +603,9 @@ def _editor_fragment(uid: str, store: WorkspaceStore, work: dict[str, Any], chap
     words = count_words(value)
     if words > TRAIN_MAX_WORDS:
         st.markdown('<span class="len-warn">' + tr(
-            f"This chapter is longer than the stories the model was trained on (up to {TRAIN_MAX_WORDS:,} words), so "
+            f"This chapter is longer than the stories the model was trained on (up to {num(TRAIN_MAX_WORDS)} words), so "
             "its analysis may be less reliable. Consider splitting it into two chapters.",
-            f"Bab ini lebih panjang dari cerita yang dipakai melatih model (maksimal {TRAIN_MAX_WORDS:,} kata), jadi "
+            f"Bab ini lebih panjang dari cerita yang dipakai melatih model (maksimal {num(TRAIN_MAX_WORDS)} kata), jadi "
             "hasil analisisnya bisa kurang akurat. Pertimbangkan untuk membaginya menjadi dua bab.") + "</span>",
             unsafe_allow_html=True)
 

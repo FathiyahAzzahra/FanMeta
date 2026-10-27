@@ -11,8 +11,7 @@ import streamlit as st
 from src.ui.components import BADGE_TONE, badge, icon, page_header, tr
 
 # Arti rating & warning mengikuti definisi AO3. Contoh tag AO3 per kategori mengikuti
-# aturan rule-based label v2 di fanmeta_utils.py (label yang dipakai model aplikasi).
-# Kalau model final memakai label v3, perbarui contoh tag di bawah.
+# aturan rule-based label v3 di fanmeta_utils.py (label yang dipakai model C di aplikasi).
 RATINGS = [
     ("General Audiences", "General",
      ("Suitable for all readers. No violence, adult themes, or sexual content that would be inappropriate for a "
@@ -63,11 +62,13 @@ TAGS = [
     ("Emotion", "Hurt/Comfort", ("One character suffers and another cares for them.",
                                  "Satu tokoh menderita dan tokoh lain merawat atau menghiburnya."),
      "Hurt/Comfort, Emotional Hurt/Comfort, Needs a Hug, Touch-Starved"),
-    ("Emotion", "Whump", ("A character is put through suffering, and the story lingers on their pain.",
-                          "Seorang tokoh mengalami penderitaan, dan cerita berlama-lama pada rasa sakitnya."),
-     "Whump"),
+    ("Emotion", "Whump", ("A character is put through suffering, often physical such as illness, torture, or "
+                          "captivity, and the story lingers on their pain.",
+                          "Seorang tokoh mengalami penderitaan, sering berupa penderitaan fisik seperti sakit, "
+                          "disiksa, atau disekap, dan cerita berlama-lama pada rasa sakitnya."),
+     "Whump, Sick Character, Sickfic, Torture, Kidnapping, Captivity"),
     ("Tone", "Humor", ("The story is meant to be funny.", "Cerita dimaksudkan untuk lucu."),
-     "Humor, Humour, Attempt at Humor, Fluff and Humor"),
+     "Humor, Humour, Attempt at Humor, Crack, Crack Treated Seriously, Comedy"),
     ("Romance", "Established Relationship", ("The main couple is already together when the story begins.",
                                              "Pasangan utama sudah bersama sejak awal cerita."),
      "Established Relationship"),
@@ -76,16 +77,16 @@ TAGS = [
      "Pining, Mutual Pining, Unrequited Love, Lovesick"),
     ("Relationships", "Family", ("Family bonds are an important theme: parents, children, or siblings.",
                                  "Ikatan keluarga menjadi tema penting: orang tua, anak, atau saudara."),
-     "Family, Found Family, Siblings, Parent-Child Relationship"),
+     "Family, Found Family, Siblings, Brothers, Parent-Child Relationship, Father-Daughter Relationship"),
     ("Relationships", "Friendship", ("A platonic friendship sits at the heart of the story.",
                                      "Persahabatan platonis menjadi inti cerita."),
-     "Friendship, Bonding"),
+     "Friendship, Best Friends, Platonic Relationship, Bonding"),
     ("Setting", "Mythical Creatures", ("Supernatural or mythical beings appear in the story.",
                                        "Makhluk gaib atau makhluk mitos muncul dalam cerita."),
-     "Vampire, Werewolf, Mermaid, Fae, Demon, Ghost, Elf, Siren"),
+     "Vampires, Werewolves, Mermaid, Fae, Demons, Ghosts, Angels, Dragons"),
     ("Theme", "Mental Health", ("The story deals with mental health issues or their treatment.",
                                 "Cerita membahas masalah kesehatan mental atau penanganannya."),
-     "Mental Health Issues, Depression, Anxiety, Trauma, Therapy, PTSD"),
+     "Depression, Anxiety, Panic Attacks, Self-Harm, PTSD, Therapy"),
     ("Sensitive content", "Alcohol", ("Drinking, being drunk, hangovers, or alcoholism plays a part.",
                                       "Minum alkohol, mabuk, pengar, atau kecanduan alkohol ikut berperan."),
      "Alcohol, Alcoholism, Drunk, Drunkenness, Hangover"),
@@ -94,7 +95,7 @@ TAGS = [
      "Blood, Injury, Injured Character, Minor Injuries"),
     ("Sensitive content", "Character Death", ("A character dies, whether on-page or off-screen.",
                                               "Ada tokoh yang meninggal, baik diceritakan langsung maupun tidak."),
-     "Character Death, Major Character Death, Off-Screen Death"),
+     "Major Character Death, Minor Character Death, Temporary Character Death, Off-Screen Death"),
     ("Sensitive content", "Suicide", ("Suicide, suicidal thoughts, or a suicide attempt is mentioned or shown.",
                                       "Bunuh diri, pikiran bunuh diri, atau percobaan bunuh diri disebut atau "
                                       "ditampilkan."),
