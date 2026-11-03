@@ -5,6 +5,7 @@ CSS-nya ada di folder ``css/``: ``theme.css`` (mode terang + struktur halaman) d
 memuat CSS tersebut dan menyusun warna mode gelap.
 """
 
+from functools import lru_cache
 from pathlib import Path
 
 import streamlit as st
@@ -14,12 +15,20 @@ from src.core.i18n import theme
 _CSS_DIR = Path(__file__).resolve().parent / "css"
 
 
-def _read_css(name: str) -> str:
+@lru_cache(maxsize=8)
+def _read_css_version(name: str, mtime_ns: int) -> str:
     return (_CSS_DIR / name).read_text(encoding="utf-8")
 
 
-# CSS utama. Warna ditulis var(--<jenis>-<hex>, <warna asli>), lihat MODE GELAP di bawah.
-_THEME_CSS = "\n<style>\n" + _read_css("theme.css") + "</style>\n"
+def _read_css(name: str) -> str:
+    """Dibaca ulang kalau filenya berubah. Streamlit Cloud tidak me-restart server setelah push,
+    jadi CSS yang hanya dibaca sekali saat import akan tetap versi lama."""
+    return _read_css_version(name, (_CSS_DIR / name).stat().st_mtime_ns)
+
+
+def _theme_css() -> str:
+    # CSS utama. Warna ditulis var(--<jenis>-<hex>, <warna asli>), lihat MODE GELAP di bawah.
+    return "\n<style>\n" + _read_css("theme.css") + "</style>\n"
 
 
 # ===== MODE GELAP =====
@@ -62,22 +71,18 @@ _DARK_COLORS = {
 _DARK_ROOT = ("--ink:#e8e9f5; --muted:#a3a6c2; --line:#2c3050; --surface:#181a2e; --canvas:#0f1020; "
               "--violet:#7c75ff; --violet-dark:#6b63f0; --violet-soft:#2a2752;")
 
-# komponen bawaan Streamlit yang warnanya diambil dari tema terang di config.toml
-_DARK_WIDGETS = "\n" + _read_css("dark_widgets.css")
+_DARK_TOKENS = " ".join(f"--{ns}-{hex_}:{dark};" for ns, colors in _DARK_COLORS.items()
+                        for dark, light in colors.items() for hex_ in light)
 
 
 def _dark_css() -> str:
-    tokens = " ".join(f"--{ns}-{hex_}:{dark};" for ns, colors in _DARK_COLORS.items()
-                      for dark, light in colors.items() for hex_ in light)
-    return f"<style>:root {{ {_DARK_ROOT} {tokens} }}{_DARK_WIDGETS}</style>"
-
-
-_DARK_CSS = _dark_css()
+    # dark_widgets.css: komponen bawaan Streamlit yang warnanya diambil dari tema terang di config.toml
+    return f"<style>:root {{ {_DARK_ROOT} {_DARK_TOKENS} }}\n{_read_css('dark_widgets.css')}</style>"
 
 
 def apply_theme() -> None:
     # foto latar login dipasang di auth_layout.art_panel (hanya di halaman login/register)
-    st.markdown(_THEME_CSS, unsafe_allow_html=True)
+    st.markdown(_theme_css(), unsafe_allow_html=True)
     # slot CSS gelap SELALU ada (kosong di mode terang). Kalau elemen ini hanya muncul di mode gelap,
     # semua elemen di bawahnya bergeser satu posisi saat ganti tema, dan halaman sempat "melompat".
-    st.markdown(_DARK_CSS if theme() == "dark" else "<style></style>", unsafe_allow_html=True)
+    st.markdown(_dark_css() if theme() == "dark" else "<style></style>", unsafe_allow_html=True)
