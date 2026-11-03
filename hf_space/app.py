@@ -4,6 +4,7 @@ Space ini hanya menjalankan model (RoBERTa + LSTM + NLLB). Tampilan, login, dan
 riwayat tetap di aplikasi Streamlit, yang memanggil fungsi ``analyze`` lewat gradio_client.
 
 - ``use_gpu=False`` (bawaan): jalan di CPU container Space, TIDAK memakai kuota ZeroGPU.
+  Di ZeroGPU, model CPU berjalan di proses terpisah (``cpu_worker.py``) supaya GPU tidak rusak.
 - ``use_gpu=True``: jalan di GPU ZeroGPU. Kalau kuota habis atau GPU tidak tersedia,
   otomatis pindah ke CPU dan alasannya dikirim balik di ``info``.
 
@@ -14,9 +15,12 @@ Logika prediksi tidak ditulis ulang di sini: ``src/ml/predictor.py`` dan ``src/m
 print("[fanmeta] app.py dimulai", flush=True)
 import spaces  # noqa: E402  ZeroGPU: harus di-import sebelum torch
 
+import json
 import os
 import re
+import subprocess
 import sys
+import threading
 import time
 import traceback
 from datetime import datetime, timedelta, timezone
@@ -33,6 +37,7 @@ if not (ROOT / "src").is_dir():
     ROOT = ROOT.parent
 sys.path.insert(0, str(ROOT))
 
+from cpu_worker import MARK  # noqa: E402
 from src.ml.predictor import FanMetaPredictor  # noqa: E402
 
 ON_ZERO_GPU = os.getenv("SPACES_ZERO_GPU", "").lower() in ("1", "t", "true")
@@ -44,9 +49,41 @@ def log(message: str) -> None:
     print(f"[fanmeta {time.strftime('%H:%M:%S')}] {message}", flush=True)
 
 
+class CpuWorker:
+    """Model CPU di proses terpisah (hf_space/cpu_worker.py), dipakai di ZeroGPU. Lihat alasannya di file itu."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()  # satu permintaan per waktu lewat pipa yang sama
+        self._start()
+
+    def _start(self) -> None:
+        self._proc = subprocess.Popen([sys.executable, str(Path(__file__).with_name("cpu_worker.py"))],
+                                      stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+        self._read()  # tunggu sampai model CPU selesai dimuat
+
+    def _read(self) -> dict[str, Any]:
+        for line in self._proc.stdout:
+            if line.startswith(MARK):
+                return json.loads(line[len(MARK):])
+            print(line, end="", flush=True)
+        raise RuntimeError("The CPU worker stopped.")
+
+    def predict(self, text: str, source_language: str) -> dict[str, Any]:
+        with self._lock:
+            if self._proc.poll() is not None:  # proses mati (mis. kehabisan memori): nyalakan lagi
+                log("proses CPU berhenti, dinyalakan ulang")
+                self._start()
+            self._proc.stdin.write(json.dumps({"text": text, "language": source_language}) + "\n")
+            self._proc.stdin.flush()
+            answer = self._read()
+        if "error" in answer:
+            raise RuntimeError(answer["error"])
+        return answer["result"]
+
+
 log(f"mulai memuat model (ZeroGPU={ON_ZERO_GPU})")
-cpu_predictor = FanMetaPredictor(device="cpu")
-log("model CPU siap")
+cpu_predictor = CpuWorker() if ON_ZERO_GPU else FanMetaPredictor(device="cpu")
+log("model CPU siap" + (" (proses terpisah)" if ON_ZERO_GPU else ""))
 gpu_predictor = None
 if ON_ZERO_GPU or torch.cuda.is_available():
     gpu_predictor = FanMetaPredictor(device="cuda")

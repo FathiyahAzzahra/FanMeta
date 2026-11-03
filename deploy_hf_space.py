@@ -26,6 +26,7 @@ CONFIG = ROOT / "checkpoints" / "06_model_app.json"
 # File lokal -> path di Space. Hanya yang dibutuhkan untuk menjalankan model (tanpa Streamlit/Firebase).
 SPACE_FILES = {
     "hf_space/app.py": "app.py",
+    "hf_space/cpu_worker.py": "cpu_worker.py",
     "hf_space/requirements.txt": "requirements.txt",
     "hf_space/README.md": "README.md",
     "src/__init__.py": "src/__init__.py",
