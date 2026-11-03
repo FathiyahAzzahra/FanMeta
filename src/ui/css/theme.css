@@ -979,6 +979,15 @@ input::-ms-reveal, input::-ms-clear { display:none; }
   .st-key-topbar [data-testid="stColumn"] [data-testid="stHorizontalBlock"],
   .st-key-topbar [data-testid="stColumn"] [data-testid="stVerticalBlock"] { gap:.55rem !important; }
 
+  /* hero Beranda muat satu layar HP: gambar disembunyikan, teks dan jarak dirapatkan */
+  .st-key-hero { padding:1.4rem 1.25rem; margin-top:0; }
+  .st-key-hero [data-testid="stColumn"]:has(.hero-art) { display:none !important; }
+  .hero-kicker { font-size:.7rem; }
+  .stApp h1.hero-h1 { font-size:1.85rem; margin:.8rem 0 .9rem; }
+  .stApp p.hero-p { font-size:.92rem; line-height:1.55; margin:0 0 1.1rem; }
+  .st-key-home_analyze button, .st-key-home_read button { min-height:2.6rem; padding:0 .9rem; }
+  .stApp p.hero-note { font-size:.78rem; margin-top:.9rem; }
+
   /* kotak ajakan di bawah Beranda: tombol tidak menempel ke teks */
   .st-key-home_cta { padding:1.5rem 1.3rem !important; margin-top:2.6rem !important; gap:1.2rem !important;
     flex-direction:column !important; align-items:flex-start !important; }
