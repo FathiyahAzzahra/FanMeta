@@ -9,7 +9,7 @@ from typing import Any
 import streamlit as st
 from streamlit.runtime.scriptrunner import add_script_run_ctx, get_script_run_ctx
 
-from src.services.firestore_history import FirestoreHistory, FirestoreHistoryError
+from src.services.firestore_history import FirestoreHistory
 from src.services.gpu_quota import GpuQuota
 from src.ml.model_api import engine_device, is_remote
 from src.ui.pages.analysis import draft_language_label
@@ -36,12 +36,45 @@ def _panel_html(items: list[tuple[str, str, str]], percent: int, use_gpu: bool,
     )
 
 
-def _start_job(draft: dict, load_predictor: Callable[[], Any], quota: GpuQuota | None) -> dict:
+@st.cache_resource(show_spinner=False)
+def _jobs() -> dict[str, dict]:
+    """Analisis terakhir per akun (uid). Disimpan di server, jadi tetap ada walau sesi browser hilang."""
+    return {}
+
+
+def resume_job(user: dict[str, str]) -> None:
+    """Sesi baru (mis. layar HP sempat mati): kembali ke analisis yang berjalan atau sudah selesai."""
+    job = _jobs().get(user["uid"])
+    if job is not None and st.session_state.get("proc_job") is None:
+        st.session_state.update(proc_job=job, analysis_draft=job["draft"], page="processing")
+
+
+def _save_result(job: dict, user: dict, history_store: FirestoreHistory | None) -> None:
+    """Simpan ke History dari thread latar, supaya hasil tidak hilang kalau halaman sudah tertutup."""
+    draft, result = job["draft"], job["result"]
+    try:
+        # id dipakai halaman hasil untuk tombol "Save to Workspace"
+        job["analysis_id"] = history_store.save_analysis(
+            firebase_uid=user["uid"], email=user["email"], title=draft.get("title", ""),
+            language=draft["language"], story=draft.get("story", ""),
+            rating=result["rating"], warnings=result["warnings"], tags=result["tags"],
+            rating_probabilities=result.get("rating_probabilities"),
+            warning_probabilities=result.get("warning_probabilities"),
+            tag_probabilities=result.get("tag_probabilities"),
+            segments_english=result.get("segments_english"),
+        )
+    except Exception:  # noqa: BLE001 - hasil tetap ditampilkan, hanya riwayat yang gagal
+        job["analysis_id"] = None
+
+
+def _start_job(draft: dict, load_predictor: Callable[[], Any], quota: GpuQuota | None, user: dict,
+               history_store: FirestoreHistory | None) -> dict:
     """Jalankan prediksi di thread latar belakang; progres dibaca lewat dict `job`."""
     is_id = draft["language"] == "Bahasa Indonesia"
     # Judul hanya disimpan; yang dianalisis isi cerita saja (sama seperti data latih).
     text = draft.get("story", "")
-    job = {"active": 1, "result": None, "error": None, "done": False, "saved": False, "device": None}
+    job = {"active": 1, "result": None, "error": None, "done": False, "analysis_id": None, "device": None,
+           "draft": draft}
 
     def work() -> None:
         try:
@@ -61,6 +94,8 @@ def _start_job(draft: dict, load_predictor: Callable[[], Any], quota: GpuQuota |
             job["result"] = predictor.predict(text, **kwargs)
             if quota is not None:
                 quota.record(job["result"].get("engine"))
+            if history_store is not None:
+                _save_result(job, user, history_store)
             job["active"] = 4
         except Exception as error:  # noqa: BLE001
             job["error"] = str(error) or "unknown error"
@@ -70,6 +105,7 @@ def _start_job(draft: dict, load_predictor: Callable[[], Any], quota: GpuQuota |
     thread = threading.Thread(target=work, daemon=True)
     add_script_run_ctx(thread, get_script_run_ctx())
     thread.start()
+    _jobs()[user["uid"]] = job
     return job
 
 
@@ -80,34 +116,22 @@ def _progress(job: dict, steps: list, draft: dict, user: dict, history_store: Fi
         st.caption(job["error"])
         if st.button(tr("Back to editor", "Kembali ke editor"), key="proc_back"):
             st.session_state.pop("proc_job", None)
+            _jobs().pop(user["uid"], None)
             navigate("analysis")
         return
 
     if job["done"] and job["result"] is not None:
         result = job["result"]
-        if not job["saved"]:
-            job["saved"] = True
-            st.session_state.pop("analysis_id", None)
-            if history_store is not None:
-                try:
-                    # id dipakai halaman hasil untuk tombol "Save to Workspace"
-                    st.session_state["analysis_id"] = history_store.save_analysis(
-                        firebase_uid=user["uid"], email=user["email"], title=draft.get("title", ""),
-                        language=draft["language"], story=draft.get("story", ""),
-                        rating=result["rating"], warnings=result["warnings"], tags=result["tags"],
-                        rating_probabilities=result.get("rating_probabilities"),
-                        warning_probabilities=result.get("warning_probabilities"),
-                        tag_probabilities=result.get("tag_probabilities"),
-                        segments_english=result.get("segments_english"),
-                    )
-                except FirestoreHistoryError:
-                    st.session_state["history_save_warning"] = True
-            else:
-                st.session_state["history_save_warning"] = True
+        st.session_state.pop("analysis_id", None)
+        if job["analysis_id"]:
+            st.session_state["analysis_id"] = job["analysis_id"]
+        else:
+            st.session_state["history_save_warning"] = True
         st.session_state["analysis_result"] = result
         if notice := fallback_notice(result.get("engine")):
             st.session_state["engine_notice"] = notice  # ditampilkan sekali di halaman hasil
         st.session_state.pop("proc_job", None)
+        _jobs().pop(user["uid"], None)
         navigate("results")
         return
 
@@ -157,7 +181,7 @@ def render(user: dict[str, str], history_store: FirestoreHistory | None,
     job = st.session_state.get("proc_job")
     if job is None:
         quota = GpuQuota(history_store.client) if history_store is not None else None
-        job = _start_job(draft, load_predictor, quota)
+        job = _start_job(draft, load_predictor, quota, user, history_store)
         st.session_state["proc_job"] = job
 
     main, status_col = st.columns([2.2, 1], gap="large")

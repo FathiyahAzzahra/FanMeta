@@ -141,7 +141,8 @@ def _render_translation(story: str, segments_en: list[str]) -> None:
             ratio = n_en / n_id if n_id else None
             low = ratio is not None and ratio < _LOW_RATIO
             ratio_html = (
-                f'<span class="tr-ratio{" tr-low" if low else ""}">{tr("ratio", "rasio")} {ratio:.2f}</span>'
+                f'<span class="tr-ratio{" tr-low" if low else ""}">'
+                f'{tr(f"ratio {ratio:.2f}", f"rasio {ratio:.2f}".replace(".", ","))}</span>'
                 if ratio is not None else ""
             )
             st.markdown(

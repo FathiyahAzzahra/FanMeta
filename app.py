@@ -20,6 +20,7 @@ from src.ml.model_api import load_predictor
 from src.services.firebase_auth import FirebaseAuth
 from src.services.firestore_history import FirestoreHistory, FirestoreHistoryError
 from src.services.gallery_store import GalleryStore
+from src.services.login_session import restore_login, signing_key, sync_cookie
 from src.services.workspace_store import WorkspaceStore
 from src.ui.components import GALLERY_ENABLED, render_footer, render_topbar, tr
 from src.ui.pages import (analysis, gallery, glossary, history, home, login, processing, register, results,
@@ -139,9 +140,17 @@ def main() -> None:
         st.error(tr("The Firebase configuration is invalid.", "Konfigurasi Firebase tidak valid."))
         return
 
-    page = resolve_page(st.session_state.get("firebase_user"))
+    session_key = signing_key(get_firestore_service_account())
+    restore_login(session_key)
+    user = st.session_state.get("firebase_user")
+    if user and not st.session_state.get("resume_checked"):
+        st.session_state["resume_checked"] = True
+        processing.resume_job(user)
+
+    page = resolve_page(user)
     if page in AUTH_PAGES:  # halaman login/daftar punya tata letak sendiri (tanpa topbar & footer)
         AUTH_PAGES[page].render(authenticator)
+        sync_cookie(session_key)
         return
 
     ctx = connect_stores()
@@ -150,6 +159,7 @@ def main() -> None:
     with page_slot.container():
         ROUTES[page](ctx)
     render_footer()
+    sync_cookie(session_key)
 
 
 main()
