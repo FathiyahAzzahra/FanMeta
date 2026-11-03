@@ -8,7 +8,7 @@ import streamlit as st
 from src.services.firestore_history import FirestoreHistory, FirestoreHistoryError
 from src.services.gallery_store import MAX_PEN_NAME_CHARS, GalleryError, GalleryStore
 from src.ui.pages import gallery as gallery_view
-from src.core.i18n import language_label
+from src.core.i18n import language_label, num
 from src.ui.pages.analysis import draft_language_label
 from src.ui.components import (
     GALLERY_ENABLED, format_created_at, format_relative, open_dialog, page_header, rating_badge, tr,
@@ -316,7 +316,7 @@ def _render_detail(user: dict[str, str], history_store: FirestoreHistory, analys
             <div class="ht-src">{source_html(item)}</div>
             <div class="page-title">{title}</div>
             <p class="page-sub">{tr("Analyzed on", "Dianalisis pada")} <b>{created_at}</b> · {tr("Source draft", "Bahasa draf")}: {html.escape(language_label(language))}
-            ({len(story.split())} {tr("words", "kata")})</p>
+            ({num(len(story.split()))} {tr("words", "kata")})</p>
             """,
             unsafe_allow_html=True,
         )

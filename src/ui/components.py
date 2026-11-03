@@ -69,8 +69,9 @@ def asset_data_uri(stem: str, max_px: int | None = None) -> str:
 
 def _logout() -> None:
     st.session_state.pop("firebase_user", None)
-    for key in ("history_detail", "after_login"):
+    for key in ("history_detail", "after_login", "login_token", "login_expires", "resume_checked"):
         st.session_state.pop(key, None)
+    st.session_state["logged_out"] = True  # cookie sesi dihapus oleh sync_cookie, jangan dipulihkan lagi
     st.session_state["page"] = "home"
 
 

@@ -13,3 +13,5 @@ headingFont = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500
 
 [server]
 runOnSave = true
+# Sesi tetap disimpan 1 jam saat koneksi putus (mis. layar HP mati). Bawaan Streamlit 2 menit.
+disconnectedSessionTTL = 3600
