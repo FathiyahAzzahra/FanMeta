@@ -85,7 +85,7 @@ Aplikasi online dipecah menjadi dua bagian, keduanya gratis:
 Tampilan memanggil Space lewat `gradio_client` (`src/ml/remote_predictor.py`) kalau Streamlit secrets punya
 bagian `[model_api]`. Tanpa bagian itu (misalnya di laptop), model berjalan langsung di komputer sendiri.
 
-Pengguna memilih **CPU** (bawaan, tidak memakai kuota) atau **GPU** sebelum analisis. GPU memakai kuota ZeroGPU
+Pengguna memilih **GPU** (bawaan, lebih cepat) atau **CPU** (tidak memakai kuota) sebelum analisis. GPU memakai kuota ZeroGPU
 akun `ZAaraAa` (akun PRO: 40 menit per hari, pulih 24 jam setelah pemakaian GPU pertama). Kalau kuota habis,
 analisis otomatis dijalankan dengan CPU dan pengguna mendapat pemberitahuan. Perkiraan sisa kuota dicatat di
 Firestore (dokumen `app_state/zerogpu_quota`).

@@ -1,6 +1,6 @@
 """Pilihan CPU/GPU untuk analisis. Hanya tampil saat model berjalan di Space Hugging Face (ZeroGPU).
 
-CPU adalah pilihan bawaan supaya kuota GPU harian tetap hemat.
+GPU adalah pilihan bawaan (lebih cepat); pengguna bisa pindah ke CPU kalau ingin menghemat kuota harian.
 """
 from typing import Any
 
@@ -24,24 +24,27 @@ def _status(quota: GpuQuota | None) -> dict[str, Any] | None:
 
 
 def render(key: str, quota: GpuQuota | None) -> None:
-    """Toggle CPU (bawaan) / GPU beserta perkiraan sisa kuota GPU hari ini."""
+    """Toggle GPU (bawaan) / CPU beserta perkiraan sisa kuota GPU hari ini."""
     if not is_remote():
         return
     status = _status(quota)
     exhausted = bool(status and status["exhausted"])
-    labels = {"cpu": tr("CPU · saves quota", "CPU · hemat kuota"), "gpu": tr("GPU · faster", "GPU · lebih cepat")}
-    st.segmented_control(tr("Run the analysis on", "Jalankan analisis dengan"), ["cpu", "gpu"],
-                         format_func=labels.get, default="cpu", key=key, disabled=exhausted)
-    if status is None:
-        return
-    reset = clock(status["reset_at"]) if status["reset_at"] else ""
+    reset = clock(status["reset_at"]) if status and status["reset_at"] else ""
+    labels = {"gpu": tr("GPU · faster", "GPU · lebih cepat"), "cpu": tr("CPU · saves quota", "CPU · hemat kuota")}
+    label = tr("Run the analysis on", "Jalankan analisis dengan")
     if exhausted:
+        # toggle tetap tampil tapi terkunci di CPU; key terpisah supaya pilihan pengguna tidak tertimpa
+        st.segmented_control(label, ["gpu", "cpu"], format_func=labels.get, default="cpu", required=True,
+                             key=f"{key}_locked", disabled=True)
         st.warning(tr(f"Today's GPU quota is used up, so analyses run on CPU (slower). GPU is available again "
                       f"around {reset}.",
                       f"Kuota GPU hari ini habis, jadi analisis memakai CPU (lebih lambat). GPU bisa dipakai lagi "
                       f"sekitar pukul {reset}."))
         return
-    note = tr(f"GPU quota left today: about {_duration(status['left_seconds'])} (estimate)",
+    st.segmented_control(label, ["gpu", "cpu"], format_func=labels.get, default="gpu", required=True, key=key)
+    if status is None:
+        return
+    note =tr(f"GPU quota left today: about {_duration(status['left_seconds'])} (estimate)",
               f"Sisa kuota GPU hari ini: sekitar {_duration(status['left_seconds'])} (perkiraan)")
     if reset:
         note += tr(f" · resets around {reset}", f" · pulih sekitar pukul {reset}")
@@ -49,8 +52,8 @@ def render(key: str, quota: GpuQuota | None) -> None:
 
 
 def wants_gpu(key: str, quota: GpuQuota | None) -> bool:
-    """True kalau pengguna memilih GPU dan kuota belum tercatat habis."""
-    if not is_remote() or st.session_state.get(key) != "gpu":
+    """True kalau pengguna tidak memilih CPU dan kuota belum tercatat habis."""
+    if not is_remote() or st.session_state.get(key, "gpu") != "gpu":
         return False
     status = _status(quota)
     return not (status and status["exhausted"])
