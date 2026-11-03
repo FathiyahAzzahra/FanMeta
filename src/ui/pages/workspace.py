@@ -354,7 +354,7 @@ def _render_detail(user: dict[str, str], store: WorkspaceStore, work: dict[str, 
             unsafe_allow_html=True,
         )
     with actions:
-        with st.container(horizontal=True, horizontal_alignment="right"):
+        with st.container(horizontal=True, horizontal_alignment="right", key="ws_detail_actions"):
             st.button(tr("Edit", "Ubah"), key="ws_edit", icon=":material/edit:", on_click=_go, args=("edit",))
             if st.button(tr("Delete", "Hapus"), key="ws_delete", icon=":material/delete:"):
                 _confirm_delete(user, store, work)
@@ -465,14 +465,11 @@ def _render_chapter_list(user: dict[str, str], store: WorkspaceStore, work: dict
                          chapters: list[dict[str, Any]], ctx: dict[str, Any], running: bool) -> None:
     work_id = work["work_id"]
     with st.container(border=True):
-        head, action = st.columns([3, 1], vertical_alignment="center")
-        with head:
+        with st.container(horizontal=True, vertical_alignment="center", key="ws_ch_head"):
             st.markdown(f'<span class="ws-section-marker"></span><div class="card-title">{tr("Chapters", "Bab")} '
                         f'<span class="count-pill">{len(chapters)}</span></div>', unsafe_allow_html=True)
-        with action:
-            with st.container(horizontal=True, horizontal_alignment="right"):
-                st.button(tr("+ Add chapter", "+ Tambah bab"), key="ws_ch_new", on_click=_new_chapter,
-                          args=(user, store, work_id))
+            st.button(tr("+ Add chapter", "+ Tambah bab"), key="ws_ch_new", on_click=_new_chapter,
+                      args=(user, store, work_id))
         if not chapters:
             st.markdown('<p class="ws-muted">' + tr("No chapters yet. Click + Add chapter to start writing.",
                                                     "Belum ada bab. Klik + Tambah bab untuk mulai menulis.") + "</p>",
@@ -491,7 +488,7 @@ def _render_chapter_list(user: dict[str, str], store: WorkspaceStore, work: dict
                 f'<div class="ch-badges">{badges}</div></div>',
                 unsafe_allow_html=True,
             )
-            with st.container(horizontal=True, gap="small"):
+            with st.container(horizontal=True, gap="small", key=f"ws_ch_act_{cid}"):
                 st.markdown('<span class="ch-actions-marker"></span>', unsafe_allow_html=True)
                 st.button(tr("Write", "Tulis"), key=f"ws_ch_open_{cid}", icon=":material/edit:",
                           on_click=_open_chapter, args=(cid,))
