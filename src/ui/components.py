@@ -4,7 +4,6 @@ import base64
 import html
 import io
 import re
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -18,9 +17,6 @@ from src.ml.model_api import is_remote
 
 _MIME = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 ASSETS_DIR = Path(__file__).resolve().parents[1] / "assets"  # src/assets
-
-# ubah ke False untuk menyembunyikan seluruh fitur galeri publik (menu, Publish, tombol Read)
-GALLERY_ENABLED = False
 
 LANGUAGE_LABEL = {"Bahasa Indonesia": "Indonesian", "Bahasa Inggris": "English"}  # lama; pakai i18n.language_label
 RATING_BADGE = {
@@ -253,7 +249,6 @@ _NAV_USER = [
 # tamu: Quick Analysis meminta login dulu (seperti mockup); logo FanMeta kembali ke Home
 _NAV_GUEST = [("Quick Analysis", "Analisis Cepat", "analysis", ("analysis",), None)]
 GUEST_ONLY_LOGIN = {"analysis"}
-_NAV_GALLERY = ("Gallery", "Galeri", "gallery", ("gallery", "work"), "gallery_work")
 _NAV_GLOSSARY = ("Glossary", "Glosarium", "glossary", ("glossary",), None)
 
 
@@ -278,8 +273,6 @@ def _nav_button(label: str, target: str, active: bool, reset_key: str | None = N
 def render_topbar(user: dict[str, str] | None) -> None:
     page = st.session_state.get("page", "home")
     items = list(_NAV_USER if user else _NAV_GUEST)
-    if GALLERY_ENABLED:
-        items.append(_NAV_GALLERY)
     items.append(_NAV_GLOSSARY)
 
     logo = asset_data_uri("logo_nobg", max_px=128)
@@ -374,19 +367,6 @@ def render_preferences(prefix: str) -> None:
     st.button("", key=f"{prefix}_theme", icon=":material/light_mode:" if dark else ":material/dark_mode:",
               type="tertiary", help=tr("Switch to light mode", "Ganti ke mode terang") if dark
               else tr("Switch to dark mode", "Ganti ke mode gelap"), on_click=toggle_theme)
-
-
-def render_labels(items: list[str], kind: str = "") -> None:
-    if not items:
-        st.markdown('<span class="empty-copy">' + tr("No label passed the prediction threshold.",
-                                                    "Tidak ada label di atas ambang prediksi.") + "</span>",
-                    unsafe_allow_html=True)
-        return
-    class_name = f"pill {kind}".strip()
-    st.markdown(
-        "".join(f'<span class="{class_name}">{html.escape(str(item))}</span>' for item in items),
-        unsafe_allow_html=True,
-    )
 
 
 def format_created_at(value: Any) -> str:

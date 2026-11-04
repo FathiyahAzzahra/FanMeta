@@ -19,17 +19,15 @@ from PIL import Image
 from src.ml.model_api import load_predictor
 from src.services.firebase_auth import FirebaseAuth
 from src.services.firestore_history import FirestoreHistory, FirestoreHistoryError
-from src.services.gallery_store import GalleryStore
 from src.services.login_session import restore_login, signing_key, sync_cookie
 from src.services.workspace_store import WorkspaceStore
-from src.ui.components import GALLERY_ENABLED, render_footer, render_topbar, tr
-from src.ui.pages import (analysis, gallery, glossary, history, home, login, processing, register, results,
-                          workspace)
+from src.ui.components import render_footer, render_topbar, tr
+from src.ui.pages import analysis, glossary, history, home, login, processing, register, results, workspace
 from src.ui.styles import apply_theme
 
 ASSETS_DIR = Path(__file__).parent / "src" / "assets"
 DEFAULT_PAGE = "home"
-GUEST_PAGES = {"home", "gallery", "work", "glossary", "login", "register"}  # boleh dibuka tanpa login
+GUEST_PAGES = {"home", "glossary", "login", "register"}  # boleh dibuka tanpa login
 AUTH_PAGES = {"login": login, "register": register}
 
 st.set_page_config(page_title="FanMeta", page_icon=Image.open(ASSETS_DIR / "logo_nobg.png"), layout="wide")
@@ -76,20 +74,17 @@ class AppContext:
     """Semua yang dibutuhkan halaman; diteruskan router ke fungsi render."""
     user: dict[str, str] | None
     history_store: FirestoreHistory | None
-    gallery_store: GalleryStore | None
     workspace_store: WorkspaceStore | None
 
 
 ROUTES: dict[str, Callable[[AppContext], None]] = {
-    "home": lambda c: home.render(c.user, c.gallery_store),
+    "home": lambda c: home.render(c.user),
     "analysis": lambda c: analysis.render(c.user, c.history_store),
     "processing": lambda c: processing.render(c.user, c.history_store, get_predictor),
     "results": lambda c: results.render(c.history_store),
     "workspace": lambda c: workspace.render(c.user, c.workspace_store, c.history_store, get_predictor),
     "history": lambda c: history.render(c.user, c.history_store),
     "glossary": lambda c: glossary.render(),
-    "gallery": lambda c: gallery.render(c.user, c.gallery_store),
-    "work": lambda c: gallery.render(c.user, c.gallery_store),  # detail satu karya di galeri
 }
 
 
@@ -97,8 +92,6 @@ def resolve_page(user: dict[str, str] | None) -> str:
     """Halaman yang boleh dibuka sekarang, sesuai status login."""
     page = st.session_state.get("page") or DEFAULT_PAGE
     if page not in ROUTES and page not in AUTH_PAGES:
-        page = DEFAULT_PAGE
-    if not GALLERY_ENABLED and page in ("gallery", "work"):
         page = DEFAULT_PAGE
     if not user and page not in GUEST_PAGES:
         st.session_state["after_login"] = page  # login dulu, lalu kembali ke halaman ini
@@ -118,12 +111,10 @@ def connect_stores() -> AppContext:
         except FirestoreHistoryError:
             st.warning(tr("Could not connect to Firestore. History is temporarily unavailable.",
                           "Firestore tidak dapat dihubungkan. Riwayat sementara tidak tersedia."))
-    client = history_store.client if history_store is not None else None
     return AppContext(
         user=st.session_state.get("firebase_user"),
         history_store=history_store,
-        gallery_store=GalleryStore(client) if client is not None else None,
-        workspace_store=WorkspaceStore(client) if client is not None else None,
+        workspace_store=WorkspaceStore(history_store.client) if history_store is not None else None,
     )
 
 

@@ -26,7 +26,7 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Selain itu (termasuk koleksi galeri public_works yang dinonaktifkan) ditolak.
+    // Selain itu ditolak.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -37,7 +37,7 @@ class FirestoreHistory:
 
     @property
     def client(self) -> Any:
-        """Firestore client, dipakai bersama oleh galeri publik."""
+        """Firestore client, dipakai bersama oleh WorkspaceStore."""
         return self._client
 
     @classmethod

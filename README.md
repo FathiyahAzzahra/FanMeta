@@ -35,7 +35,7 @@ src/
 │   └── model_api.py        memilih predictor lokal atau Space (dari Streamlit secrets)
 ├── services/           akses data & layanan luar
 │   ├── firebase_auth.py    login / daftar (Firebase Auth)
-│   ├── firestore_history.py, workspace_store.py, gallery_store.py   penyimpanan di Firestore
+│   ├── firestore_history.py, workspace_store.py   penyimpanan di Firestore
 │   └── gpu_quota.py        catatan sisa kuota ZeroGPU
 ├── core/               helper tanpa tampilan
 │   └── i18n.py (bahasa EN/ID), rich_text.py, story_file.py (.txt/.docx), workspace_metadata.py

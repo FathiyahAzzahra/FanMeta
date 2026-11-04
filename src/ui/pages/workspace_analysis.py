@@ -259,13 +259,6 @@ def state_badge(state: str) -> str:
     return badge(tr(en, id_), tone)
 
 
-def chapter_status_html(chapter: dict[str, Any]) -> str:
-    """Badge rating terakhir + status analisis bab (dipakai di beberapa tempat)."""
-    state = chapter_state(chapter)
-    analysis = chapter.get("analysis") or {}
-    return (rating_badge(analysis["rating"]) if analysis.get("rating") else "") + state_badge(state)
-
-
 def _from(numbers: list[int]) -> str:
     if not numbers:
         return ""

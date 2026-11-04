@@ -320,8 +320,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.summary-marker) {
 
 
 /* ===== 6d. HISTORY PAGE ===== */
-.st-key-hist_search,
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-search-marker) {  /* penanda lama dipakai galeri */
+.st-key-hist_search {
     background:var(--bg-ffffff, #fff); border:1px solid var(--line) !important; border-radius:12px;
 }
 .hist-filter-label { font-size:.88rem; font-weight:600; color:var(--ink); text-align:right; }
@@ -361,71 +360,9 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.hist-search-marker) {  /* p
 [class*="st-key-hist_view_"] button:hover { background:var(--bg-eff6ff, #eff6ff) !important; }
 [class*="st-key-hist_del_"] button:hover { background:var(--bg-fff0f1, #fff0f1) !important; }
 
-.pub-status { font-size:.8rem; font-weight:600; color:var(--fg-15803d, #15803d); margin:.2rem 0 .1rem; }
-.st-key-work_unpublish button {
-    width:100%; height:42px; min-height:42px; border-radius:8px !important;
-    background:var(--bg-ffffff, #fff) !important; border:1px solid var(--bd-fecaca, #fecaca) !important; box-shadow:none !important;
-}
-.st-key-work_unpublish button p { color:var(--fg-dc2626, #dc2626) !important; font-size:15px !important; font-weight:600 !important; }
-.st-key-work_unpublish button:hover { border-color:var(--bd-dc2626, #dc2626) !important; }
-
 
 /* ===== 6e. HOME PAGE ===== */
 
-
-/* ===== 6f. GALLERY ===== */
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.gallery-card-marker) {
-    background:var(--bg-ffffff, #fff); border:1px solid var(--line) !important; border-radius:12px;
-}
-.gc-title { font-size:1rem; font-weight:800; color:var(--ink); line-height:1.35; }
-.gc-meta { font-size:.76rem; color:var(--fg-6b7280, #6b7280); margin:.15rem 0 .55rem; }
-.gc-meta b { color:var(--ink); font-weight:600; }
-.gc-badges { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.55rem; }
-.gc-warn { display:inline-block; padding:.12rem .5rem; border-radius:5px; font-size:.72rem; font-weight:600; background:var(--bg-ffefdc, #ffefdc); color:var(--fg-b4470f, #b4470f); }
-.stApp .gc-snippet { font-size:.8rem; color:var(--muted); line-height:1.55; margin:0 0 .6rem;
-    display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; min-height:4.9rem; }
-.stApp .gc-hidden { font-style:italic; color:var(--fg-9ca3af, #9ca3af); }
-.gc-tags { display:flex; flex-wrap:wrap; gap:.3rem; min-height:1.5rem; }
-.gc-tag { padding:.15rem .5rem; border-radius:5px; background:var(--bg-f1f3f7, #f1f3f7); color:var(--fg-374151, #374151); font-size:.72rem; border:1px solid var(--bd-e5e7eb, #e5e7eb); }
-.gc-more { background:var(--violet-soft); color:var(--violet); border-color:transparent; }
-.gc-stats { display:flex; flex-wrap:wrap; gap:.8rem; font-size:.74rem; color:var(--fg-6b7280, #6b7280); margin-top:.7rem;
-    border-top:1px solid var(--bd-eeedf4, #eeedf4); padding-top:.55rem; }
-[class*="st-key-gal_read_"] button, [class*="st-key-home_read_"] button {
-    background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; min-height:0 !important;
-}
-[class*="st-key-gal_read_"] button p, [class*="st-key-home_read_"] button p { color:var(--violet) !important; font-size:.85rem !important; font-weight:600; }
-[class*="st-key-gal_read_"] button:hover p, [class*="st-key-home_read_"] button:hover p { text-decoration:underline; }
-
-/* halaman baca cerita */
-.story-body { background:var(--bg-ffffff, #fff); border:1px solid var(--line); border-radius:12px; padding:1.4rem 1.6rem; }
-.stApp .story-body p { font-size:.95rem; line-height:1.85; color:var(--fg-1f2937, #1f2937); margin:0 0 1rem; }
-.st-key-work_like button, .st-key-work_liked button {
-    width:100%; height:42px; min-height:42px; border-radius:8px !important; box-shadow:none !important;
-}
-.st-key-work_like button { background:var(--bg-ffffff, #fff) !important; border:1px solid var(--bd-d9d7e5, #d9d7e5) !important; }
-.st-key-work_like button p { color:var(--ink) !important; font-size:15px !important; font-weight:600 !important; }
-.st-key-work_like button:hover { border-color:var(--bd-e11d48, #e11d48) !important; }
-.st-key-work_liked button { background:var(--bg-fff1f2, #fff1f2) !important; border:1px solid var(--bd-fecdd3, #fecdd3) !important; }
-.st-key-work_liked button p { color:var(--fg-e11d48, #e11d48) !important; font-size:15px !important; font-weight:600 !important; }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.age-gate-marker) {
-    background:var(--bg-ffffff, #fff); border:1px solid var(--bd-fed7aa, #fed7aa) !important; border-radius:12px; padding:.6rem .8rem;
-}
-.ag-title { font-size:1.05rem; font-weight:800; color:var(--fg-b4470f, #b4470f); }
-.stApp .ag-text { font-size:.86rem; color:var(--muted); line-height:1.55; margin:.3rem 0 .6rem; }
-.st-key-age_no button { background:var(--bg-ffffff, #fff) !important; border:1px solid var(--bd-d9d7e5, #d9d7e5) !important; }
-.st-key-age_no button p { color:var(--ink) !important; }
-
-/* komentar */
-.cm-title { font-size:1.05rem; font-weight:800; color:var(--ink); margin:1.6rem 0 .6rem; }
-div[data-testid="stVerticalBlockBorderWrapper"]:has(.comment-marker) { background:var(--bg-ffffff, #fff); border:1px solid var(--line) !important; border-radius:10px; }
-.cm-head { display:flex; align-items:center; gap:.5rem; font-size:.85rem; color:var(--ink); }
-.cm-head small { color:var(--fg-9ca3af, #9ca3af); font-size:.74rem; margin-left:auto; }
-.cm-author { padding:.05rem .4rem; border-radius:4px; background:var(--violet-soft); color:var(--violet); font-size:.68rem; font-weight:600; }
-.cm-text { font-size:.86rem; color:var(--fg-374151, #374151); line-height:1.6; margin-top:.3rem; white-space:pre-wrap; }
-[class*="st-key-cm_del_"] button {
-    background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; min-height:0 !important;
-}
-[class*="st-key-cm_del_"] button p { color:var(--fg-dc2626, #dc2626) !important; font-size:.78rem !important; font-weight:600; }
 
 /* tautan Back to Home di halaman login/register, tombol daftar di topbar */
 .st-key-go_home button { background:none !important; border:none !important; box-shadow:none !important; padding:.2rem 0 0 !important; min-height:0; }

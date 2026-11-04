@@ -2,9 +2,8 @@
 fanmeta_utils.py
 ================
 Satu tempat untuk semua fungsi FanMeta, dipakai oleh:
-    - 01_Training_FanMeta.ipynb
-    - 02_Evaluasi_Indonesia.ipynb
-    - aplikasi Streamlit (nanti)
+    - notebook 01, 02, 05b, 06, 07, 08 dan skrip 00, 00b, 03 di folder Training
+    - aplikasi Streamlit (salinan identik di FanMeta_Aplikasi_Web/src/ml/fanmeta_utils.py)
 
 Dengan begitu aturan label, preprocessing, segmentasi, dan model
 dijamin SAMA di semua tempat. Kalau ingin mengubah aturan, ubah di sini saja.
@@ -12,7 +11,7 @@ dijamin SAMA di semua tempat. Kalau ingin mengubah aturan, ubah di sini saja.
 Isi file:
     1. Konfigurasi label
     2. Preprocessing teks
-    3. Rule-based labeling (Additional Tags, versi v2)
+    3. Rule-based labeling (Additional Tags, versi v3 = v1 + v2 + v3)
     4. Persiapan dataset (cleaning + labeling)
     5. Segmentasi 200/50
     6. Translasi NLLB (per kalimat)
@@ -96,7 +95,7 @@ def text_hash(text):
 
 
 # ============================================================
-# 3. RULE-BASED LABELING — ADDITIONAL TAGS (v2)
+# 3. RULE-BASED LABELING — ADDITIONAL TAGS (v1 -> v2 -> v3)
 # ============================================================
 # v1 = aturan asli (exact / whole word / contains).
 # v2 = v1 + tambahan pola longgar untuk Humor, Fluff, Angst, Hurt/Comfort

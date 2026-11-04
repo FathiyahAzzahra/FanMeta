@@ -1,10 +1,7 @@
 """Landing page (mockup "Home · Welcome to FanMeta"): hero, fitur, cara kerja, dan ajakan mencoba."""
 import streamlit as st
 
-from src.services.gallery_store import GalleryError, GalleryStore
-from src.ui.pages import gallery as gallery_view
-from src.ui.components import (GALLERY_ENABLED, asset_data_uri, icon, icon_box, navigate, navigate_cb, require_login,
-                               tr)
+from src.ui.components import asset_data_uri, icon, icon_box, navigate, navigate_cb, require_login, tr
 
 # kotak fitur yang bisa diklik: (ikon, halaman tujuan, (judul EN, ID), (isi EN, ID), (tombol EN, ID))
 _FEATURES = [
@@ -62,7 +59,7 @@ def _analyze(user: dict[str, str] | None) -> None:
         require_login("analysis")
 
 
-def render(user: dict[str, str] | None, gallery: GalleryStore | None) -> None:
+def render(user: dict[str, str] | None) -> None:
     art = asset_data_uri("gambar_register", max_px=1100)
     with st.container(key="hero"):
         text, picture = st.columns([1.12, 1], gap="large", vertical_alignment="center")
@@ -84,10 +81,7 @@ def render(user: dict[str, str] | None, gallery: GalleryStore | None) -> None:
                 if st.button(tr("Analyze Now", "Analisis Sekarang"), key="home_analyze", type="primary",
                              icon=":material/arrow_forward:"):
                     _analyze(user)
-                if GALLERY_ENABLED:
-                    if st.button(tr("Read Stories", "Baca Cerita"), key="home_read"):
-                        navigate("gallery")
-                elif st.button(tr("Learn the Metadata", "Pelajari Metadata"), key="home_read"):
+                if st.button(tr("Learn the Metadata", "Pelajari Metadata"), key="home_read"):
                     navigate("glossary")
             st.markdown('<p class="hero-note">' + tr("Free to use · Your stories stay private · You decide what fits",
                                                      "Gratis · Ceritamu tetap pribadi · Kamu yang menentukan")
@@ -109,20 +103,10 @@ def render(user: dict[str, str] | None, gallery: GalleryStore | None) -> None:
             st.button(tr(*cta), key=f"home_go_{target}", type="tertiary", icon=":material/arrow_forward:",
                       icon_position="right", on_click=_open_feature, args=(target, user))
 
-    if GALLERY_ENABLED and gallery:
-        try:
-            latest = gallery_view.cached_works(gallery)[:3]
-        except GalleryError:
-            latest = []
-        if latest:
-            st.markdown('<div class="home-head"><div class="home-h2">'
-                        + tr("Latest from the gallery", "Terbaru dari galeri") + "</div></div>", unsafe_allow_html=True)
-            gallery_view.render_grid(latest, key_prefix="home")
-    else:
-        steps = "".join(f'<div class="home-step"><div class="home-step-n">{i:02d}</div><h3>{tr(*t)}</h3><p>{tr(*d)}</p></div>'
-                        for i, (t, d) in enumerate(_HOW_IT_WORKS, start=1))
-        st.markdown('<div class="home-head"><div class="home-h2">' + tr("How FanMeta works", "Cara kerja FanMeta")
-                    + f'</div></div><div class="home-steps">{steps}</div>', unsafe_allow_html=True)
+    steps = "".join(f'<div class="home-step"><div class="home-step-n">{i:02d}</div><h3>{tr(*t)}</h3><p>{tr(*d)}</p></div>'
+                    for i, (t, d) in enumerate(_HOW_IT_WORKS, start=1))
+    st.markdown('<div class="home-head"><div class="home-h2">' + tr("How FanMeta works", "Cara kerja FanMeta")
+                + f'</div></div><div class="home-steps">{steps}</div>', unsafe_allow_html=True)
 
     with st.container(key="home_cta", horizontal=True, vertical_alignment="center"):
         st.markdown('<div class="cta-t">' + tr("Your next chapter starts here.", "Bab berikutnya dimulai di sini.")
