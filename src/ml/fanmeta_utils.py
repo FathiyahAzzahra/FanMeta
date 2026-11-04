@@ -1,12 +1,8 @@
 """
-fanmeta_utils.py
-================
-Satu tempat untuk semua fungsi FanMeta, dipakai oleh:
-    - notebook 01, 02, 05b, 06, 07, 08 dan skrip 00, 00b, 03 di folder Training
-    - aplikasi Streamlit (salinan identik di FanMeta_Aplikasi_Web/src/ml/fanmeta_utils.py)
-
-Dengan begitu aturan label, preprocessing, segmentasi, dan model
-dijamin SAMA di semua tempat. Kalau ingin mengubah aturan, ubah di sini saja.
+Fungsi-fungsi FanMeta yang dipakai bersama oleh notebook 01, 02, 05b, 06, 07, 08, skrip 00, 00b, 03,
+dan aplikasi Streamlit (salinan yang sama ada di FanMeta_Aplikasi_Web/src/ml/fanmeta_utils.py).
+Aturan label, preprocessing, segmentasi, dan model ditulis di satu file ini supaya training dan
+aplikasi memakai aturan yang sama.
 
 Isi file:
     1. Konfigurasi label
