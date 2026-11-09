@@ -62,7 +62,7 @@ def _analyze(user: dict[str, str] | None) -> None:
 def render(user: dict[str, str] | None) -> None:
     art = asset_data_uri("gambar_register", max_px=1100)
     with st.container(key="hero"):
-        text, picture = st.columns([1.12, 1], gap="large", vertical_alignment="center")
+        text, picture = st.columns([1.35, 1], gap="large", vertical_alignment="center")
         with text:
             st.markdown(
                 f"""
