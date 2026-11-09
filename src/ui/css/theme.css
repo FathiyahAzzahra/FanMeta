@@ -2565,6 +2565,7 @@ div[data-testid="stVerticalBlockBorderWrapper"]:has(.form-card-marker) {
     min-height: 2.73rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
