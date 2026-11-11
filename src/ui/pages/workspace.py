@@ -10,7 +10,7 @@ from src.services.gpu_quota import GpuQuota
 from src.core.story_file import StoryFileError, read_story_file
 from src.services.workspace_store import LANGUAGES, LIMITS, STATUSES, WorkspaceError, WorkspaceStore
 from src.ui.pages.analysis import TRAIN_MAX_WORDS
-from src.core.i18n import language_label, num
+from src.core.i18n import language_label, local_date, now_local, num
 from src.ui.components import (
     badge, breadcrumb, danger_box, format_created_at, format_relative, icon, icon_box, navigate_cb, open_dialog,
     page_header, rating_badge, status_badge, status_label, tr,
@@ -64,12 +64,8 @@ def _analyzed_today(history_store: Any, uid: str) -> int:
         items = history_store.list_history(uid)
     except Exception:  # noqa: BLE001 - statistik saja, jangan gagalkan halaman
         return 0
-    today = datetime.now().astimezone().date()
-
-    def day(value: Any) -> Any:
-        value = value.to_datetime() if hasattr(value, "to_datetime") else value
-        return value.astimezone().date() if isinstance(value, datetime) else None
-    return sum(1 for h in items if h.get("source") == "workspace" and day(h.get("created_at")) == today)
+    today = now_local().date()
+    return sum(1 for h in items if h.get("source") == "workspace" and local_date(h.get("created_at")) == today)
 
 
 def _render_list(user: dict[str, str], store: WorkspaceStore, ctx: dict[str, Any]) -> None:

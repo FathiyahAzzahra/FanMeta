@@ -6,8 +6,9 @@ diterjemahkan karena harus sama persis dengan istilah resmi AO3.
 
 Pemakaian: ``tr("English text", "Teks Indonesia")``.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone, tzinfo
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import streamlit as st
 from streamlit import runtime
@@ -86,6 +87,35 @@ def language_label(value: str) -> str:
     return tr(en, id_)
 
 
+_DEFAULT_TZ = "Asia/Jakarta"
+_WIB = timezone(timedelta(hours=7), "WIB")
+
+
+def user_tz() -> tzinfo:
+    """Zona waktu browser pengguna; WIB kalau tidak terbaca.
+
+    Jangan pakai ``astimezone()`` tanpa argumen: itu zona waktu SERVER. Di Streamlit Cloud server memakai UTC,
+    jadi jam yang tampil mundur 7 jam dari WIB.
+    """
+    name = None
+    if runtime.exists():
+        try:
+            name = st.context.timezone
+        except Exception:  # noqa: BLE001 - konteks browser belum ada
+            name = None
+    for candidate in (name, _DEFAULT_TZ):
+        if candidate:
+            try:
+                return ZoneInfo(candidate)
+            except Exception:  # noqa: BLE001 - nama zona tidak dikenal / tzdata tidak ada
+                continue
+    return _WIB
+
+
+def now_local() -> datetime:
+    return datetime.now(user_tz())
+
+
 def _local(value: Any) -> datetime | None:
     if hasattr(value, "to_datetime"):
         value = value.to_datetime()
@@ -93,7 +123,12 @@ def _local(value: Any) -> datetime | None:
         return None
     if value.tzinfo is None:
         value = value.replace(tzinfo=timezone.utc)
-    return value.astimezone()
+    return value.astimezone(user_tz())
+
+
+def local_date(value: Any) -> Any:
+    local = _local(value)
+    return local.date() if local else None
 
 
 def format_date(value: Any, with_time: bool = False) -> str:
@@ -113,7 +148,7 @@ def format_relative(value: Any) -> str:
     local = _local(value)
     if local is None:
         return "-"
-    days = (datetime.now().astimezone().date() - local.date()).days
+    days = (now_local().date() - local.date()).days
     if days == 0:
         return tr(f"today, {local:%H:%M}", f"hari ini, {local:%H.%M}")
     if days == 1:

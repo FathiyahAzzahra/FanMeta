@@ -8,7 +8,7 @@ import streamlit as st
 from src.services.firestore_history import FirestoreHistory
 
 from src.ml import fanmeta_utils as U
-from src.core.i18n import pct
+from src.core.i18n import pct, theme
 from src.ui.components import navigate, tr
 
 NONE_WARNING = "no archive warnings apply"
@@ -90,31 +90,66 @@ def summary_html(result: dict[str, Any]) -> str:
 
 
 def copy_button(result: dict[str, Any]) -> None:
-    text = "\n".join(f"{label}: {value}" for label, value in summary_rows(result))
-    payload = json.dumps(text)
-    label, done = tr("Copy Metadata to Clipboard", "Salin Metadata"), tr("Copied!", "Tersalin!")
+    """Tombol salin per bagian (Rating / Archive Warnings / Additional Tags) + salin semua.
+
+    Di formulir AO3 ketiga bagian diisi di kolom yang berbeda, jadi tombol per bagian hanya menyalin isinya
+    (tanpa label) supaya bisa langsung ditempel. Tags dipisah koma, sesuai kolom tag AO3.
+    """
+    rows = summary_rows(result)
+    parts = [{"label": short, "text": value} for short, (_, value) in zip(
+        ["Rating", "Warnings", "Tags"], rows)]
+    all_text = "\n".join(f"{label}: {value}" for label, value in rows)
+    label_all, done = tr("Copy All Metadata", "Salin Semua Metadata"), tr("Copied!", "Tersalin!")
+    hint = tr("Copy one field", "Salin per kolom")
+    dark = theme() == "dark"
+    ink, line, surface, muted = (("#e8e9f5", "#3a3f63", "#181a2e", "#a3a6c2") if dark
+                                 else ("#202033", "#d9d7e5", "#ffffff", "#6b7280"))
+    small = "".join(
+        f'<button class="s" data-i="{i}" title="{html.escape(tr("Copy", "Salin") + " " + p["label"])}">'
+        f'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" '
+        f'stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/>'
+        f'<path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>'
+        f'<span>{html.escape(p["label"])}</span></button>' for i, p in enumerate(parts))
     st.iframe(
         f"""<!doctype html>
         <style>
-        html,body{{margin:0;padding:0;overflow:hidden;background:transparent}}
-        button{{position:fixed;inset:0;width:100%;height:100%;border:0;border-radius:8px;background:#635bff;
-        color:#fff;font:600 15px Inter,'Source Sans Pro',sans-serif;cursor:pointer}}
-        button:hover{{background:#5149db}}
+        html,body{{margin:0;padding:0;overflow:hidden;background:transparent;font-family:Inter,'Source Sans Pro',sans-serif}}
+        .hint{{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:{muted};margin:4px 0 6px}}
+        .row{{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}}
+        button{{cursor:pointer;border-radius:8px;font-weight:600}}
+        .s{{height:36px;display:flex;align-items:center;justify-content:center;gap:5px;padding:0 4px;
+           background:{surface};color:{ink};border:1px solid {line};font-size:13px;min-width:0}}
+        .s span{{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+        .s:hover{{border-color:#635bff;color:#635bff}}
+        .s.ok{{border-color:#16a34a;color:#16a34a}}
+        .a{{width:100%;height:42px;border:0;background:#635bff;color:#fff;font-size:15px}}
+        .a:hover{{background:#5149db}}
         </style>
-        <button id="c">{label}</button>
+        <p class="hint">{hint}</p>
+        <div class="row">{small}</div>
+        <button class="a" id="all">{label_all}</button>
         <script>
-        const t = {payload}, b = document.getElementById('c'), label = {json.dumps(label)}, done = {json.dumps(done)};
-        b.onclick = async () => {{
+        const parts = {json.dumps(parts)}, all = {json.dumps(all_text)}, done = {json.dumps(done)};
+        async function copy(t) {{
             try {{ await navigator.clipboard.writeText(t); }}
             catch (e) {{
                 const a = document.createElement('textarea'); a.value = t;
                 document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove();
             }}
-            b.textContent = done; setTimeout(() => b.textContent = label, 1800);
-        }};
+        }}
+        function flash(b, sel) {{
+            const el = sel ? b.querySelector(sel) : b, old = el.textContent;
+            el.textContent = done; b.classList.add('ok');
+            setTimeout(() => {{ el.textContent = old; b.classList.remove('ok'); }}, 1500);
+        }}
+        document.querySelectorAll('.s').forEach(b => b.onclick = async () => {{
+            await copy(parts[+b.dataset.i].text); flash(b, 'span');
+        }});
+        const a = document.getElementById('all');
+        a.onclick = async () => {{ await copy(all); flash(a); }};
         </script>
         """,
-        height=42,
+        height=116,
     )
 
 
