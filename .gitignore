@@ -27,6 +27,7 @@ checkpoints/*
 .idea/
 .claude/
 .agents/
+CLAUDE.md
 
 # ===== File sistem operasi =====
 Thumbs.db
