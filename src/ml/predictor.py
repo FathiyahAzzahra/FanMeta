@@ -21,7 +21,7 @@ NLLB_MODEL_NAME = "facebook/nllb-200-distilled-600M"
 
 # Repo Hugging Face Hub berisi file .pt (GitHub menolak file > 100 MB).
 # Dipakai hanya jika file tidak ada di folder checkpoints/ (misalnya di server deploy).
-# Repo private butuh env HF_TOKEN.
+# Repo gated: butuh akses yang disetujui + login Hugging Face (hf auth login) atau env HF_TOKEN.
 MODEL_REPO_ID = os.environ.get("FANMETA_MODEL_REPO", "ZAaraAa/fanmeta-model")
 
 

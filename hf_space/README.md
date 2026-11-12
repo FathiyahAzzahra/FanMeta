@@ -17,7 +17,7 @@ Space ini menjalankan model FanMeta (RoBERTa + Task-Specific LSTM, NLLB-200 untu
 dan dipanggil oleh aplikasi Streamlit FanMeta lewat `gradio_client`.
 
 - Hardware: **ZeroGPU** (pilih di Settings > Hardware).
-- Secret `HF_TOKEN`: token read, untuk mengunduh file model dari repo `ZAaraAa/fanmeta-model` (private).
+- Secret `HF_TOKEN`: token read, untuk mengunduh file model dari repo `ZAaraAa/fanmeta-model` (gated).
 - Endpoint `/analyze(text, language, use_gpu)`: `use_gpu=False` berjalan di CPU (tanpa kuota);
   `use_gpu=True` memakai ZeroGPU dan otomatis pindah ke CPU kalau kuota habis.
 

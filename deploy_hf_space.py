@@ -3,12 +3,12 @@
 Login dulu sekali (token WRITE dari https://huggingface.co/settings/tokens):
     .venv\\Scripts\\hf.exe auth login
 
-    python deploy_hf_space.py model    upload 2 file .pt (nama dari checkpoints/06_model_app.json) ke repo model private
+    python deploy_hf_space.py model    upload 2 file .pt (nama dari checkpoints/06_model_app.json) ke repo model (gated)
     python deploy_hf_space.py space    upload Space Gradio + ZeroGPU (hf_space/ + src/ml/ + checkpoints/06_model_app.json)
 
 Tambahkan --dry-run untuk melihat daftar file tanpa meng-upload apa pun.
 
-Space butuh secret HF_TOKEN (token READ) untuk mengunduh repo model yang private. Isi env
+Space butuh secret HF_TOKEN (token READ) untuk mengunduh repo model yang gated. Isi env
 FANMETA_SPACE_HF_TOKEN sebelum menjalankan `space` supaya diisi otomatis, atau isi sendiri di
 Settings Space > Variables and secrets.
 """
@@ -59,7 +59,7 @@ def upload(api, repo_id: str, repo_type: str, files: dict[str, str], message: st
 
 def deploy_model(api, dry_run: bool) -> None:
     files = model_files()
-    print(f"Repo model (private): {MODEL_REPO}")
+    print(f"Repo model (gated): {MODEL_REPO}")
     check(files)
     if dry_run:
         return
@@ -74,7 +74,7 @@ def deploy_space(api, dry_run: bool) -> None:
     if dry_run:
         return
     token = os.environ.get("FANMETA_SPACE_HF_TOKEN")
-    secret = {"key": "HF_TOKEN", "value": token, "description": "Token READ untuk repo model private"}
+    secret = {"key": "HF_TOKEN", "value": token, "description": "Token READ untuk repo model gated"}
     # Akun gratis hanya boleh membuat Space Gradio di ZeroGPU (Space baru otomatis cpu-basic = butuh PRO),
     # jadi hardware dan secret diisi saat Space dibuat, sebelum build pertama.
     api.create_repo(SPACE_REPO, repo_type="space", space_sdk="gradio", space_hardware="zero-a10g",
