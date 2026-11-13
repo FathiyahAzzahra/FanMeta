@@ -20,8 +20,34 @@ Dibuat untuk skripsi S1 Teknik Informatika, Universitas Tarumanagara.
 
 Teks dipecah menjadi segmen 200 kata (overlap 50 kata). RoBERTa (`FacebookAI/roberta-base`, di-fine-tune) membaca
 setiap segmen, lalu Task-Specific LSTM menggabungkan semua segmen untuk tiap tugas (rating, warning, tags).
+Arsitektur hierarkis ini diadaptasi dari ARC-NLP (Sahin dkk., 2023) untuk tugas Trigger Detection PAN 2023,
+lalu dikembangkan menjadi multi-task (rating, warning, tags) dengan LSTM terpisah untuk tiap tugas.
 
-File model **tidak ada di repo ini** karena terlalu besar untuk GitHub (±500 MB).
+Data latih berasal dari cerita AO3 hasil scraping dan dataset Hugging Face
+[`midwestern-simulation-active/ao3_random_subset`](https://huggingface.co/datasets/midwestern-simulation-active/ao3_random_subset).
+Dataset tidak dibagikan karena cerita adalah milik penulisnya.
+
+### File model
+
+File model (±500 MB) **tidak ada di repo ini** karena terlalu besar untuk GitHub. File disimpan di repo
+Hugging Face [`ZAaraAa/fanmeta-model`](https://huggingface.co/ZAaraAa/fanmeta-model) dengan akses **gated**:
+
+1. Buka halaman model, isi formulir **Request access**, lalu tunggu disetujui pemilik. Akses hanya untuk
+   riset atau pendidikan non-komersial (lisensi CC BY-NC 4.0).
+2. Setelah disetujui, login Hugging Face di komputer (`hf auth login`, token **read**). Aplikasi akan
+   mengunduh kedua file model secara otomatis saat analisis pertama.
+
+Tanpa akses ke file model, model tetap bisa dicoba lewat Space publik
+[`ZAaraAa/fanmeta-model-api`](https://huggingface.co/spaces/ZAaraAa/fanmeta-model-api) (lihat bagian
+[Deploy](#deploy-streamlit-community-cloud--hugging-face-space), bagian `[model_api]` di secrets).
+
+### Referensi
+
+- Sahin, U., Kucukkaya, I. E., & Toraman, C. (2023). *ARC-NLP at PAN 2023: Hierarchical Long Text
+  Classification for Trigger Detection*. CLEF 2023 Working Notes. https://arxiv.org/abs/2307.14912
+- Liu, Y., dkk. (2019). *RoBERTa: A Robustly Optimized BERT Pretraining Approach*. https://arxiv.org/abs/1907.11692
+- NLLB Team (2022). *No Language Left Behind: Scaling Human-Centered Machine Translation*.
+  https://arxiv.org/abs/2207.04672
 
 ## Struktur folder
 
@@ -61,8 +87,9 @@ Alur satu permintaan: `app.py` (router) → `src/ui/pages/<halaman>.py` → `src
    .venv\Scripts\activate
    pip install -r requirements-local.txt
    ```
-2. Salin file model ke folder `checkpoints/`: `02_roberta_stage1_C.pt` dan `04_lstm_C_seed42.pt` (model final C).
-   Pengaturan modelnya (`06_model_app.json`) sudah ada di repo.
+2. Siapkan file model (lihat [File model](#file-model)): minta akses lalu `hf auth login`, atau salin
+   `02_roberta_stage1_C.pt` dan `04_lstm_C_seed42.pt` (model final C) ke folder `checkpoints/` kalau sudah
+   punya filenya. Pengaturan modelnya (`06_model_app.json`) sudah ada di repo.
 3. Salin `.streamlit/secrets.toml.example` menjadi `.streamlit/secrets.toml`, lalu isi dengan kunci Firebase.
 4. Pasang aturan keamanan Firestore: salin isi `firestore.rules` ke Firebase Console > Firestore > Rules.
 5. Jalankan:
@@ -80,7 +107,7 @@ Aplikasi online dipecah menjadi dua bagian, keduanya gratis:
 |---|---|---|
 | Tampilan | Streamlit Community Cloud | `app.py` + `src/` (login, Workspace, History). Tidak memuat model. Library: `requirements.txt`. |
 | Model | Hugging Face Space `ZAaraAa/fanmeta-model-api` (Gradio + ZeroGPU) | `hf_space/` + `src/ml/predictor.py` + `src/ml/fanmeta_utils.py` + `checkpoints/06_model_app.json` |
-| File model | Repo model Hugging Face `ZAaraAa/fanmeta-model` (private) | `02_roberta_stage1_C.pt`, `04_lstm_C_seed42.pt` |
+| File model | Repo model Hugging Face `ZAaraAa/fanmeta-model` (gated, persetujuan manual) | `02_roberta_stage1_C.pt`, `04_lstm_C_seed42.pt` |
 
 Tampilan memanggil Space lewat `gradio_client` (`src/ml/remote_predictor.py`) kalau Streamlit secrets punya
 bagian `[model_api]`. Tanpa bagian itu (misalnya di laptop), model berjalan langsung di komputer sendiri.
@@ -96,12 +123,12 @@ Firestore (dokumen `app_state/zerogpu_quota`).
    ```
    .venv\Scripts\hf.exe auth login
    ```
-2. Upload file model ke repo model private:
+2. Upload file model ke repo model (gated):
    ```
    python deploy_hf_space.py model
    ```
 3. Upload Space. Isi dulu `FANMETA_SPACE_HF_TOKEN` dengan token **read** supaya secret `HF_TOKEN` di Space
-   terisi otomatis (dipakai Space untuk mengunduh repo model yang private):
+   terisi otomatis (dipakai Space untuk mengunduh repo model yang gated):
    ```
    $env:FANMETA_SPACE_HF_TOKEN = "hf_..."
    python deploy_hf_space.py space

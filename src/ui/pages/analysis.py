@@ -151,8 +151,8 @@ def render(_user: dict[str, str], history_store: FirestoreHistory | None) -> Non
                 "Pilih Bahasa Indonesia, lalu FanMeta menerjemahkan cerita ke bahasa Inggris dengan NLLB-200 sebelum "
                 "dianalisis, karena model dilatih dengan cerita berbahasa Inggris. Prosesnya lebih lama.")),
             (tr("Story Length", "Panjang Cerita"), tr(
-                "The model was trained on stories of 2,000–3,500 words. Paste the text or upload a .txt or .docx file.",
-                "Model dilatih dengan cerita 2.000–3.500 kata. Tempel teksnya atau unggah file .txt atau .docx.")),
+                "The model was trained on stories of 500–3,500 words. Paste the text or upload a .txt or .docx file.",
+                "Model dilatih dengan cerita 500–3.500 kata. Tempel teksnya atau unggah file .txt atau .docx.")),
         ]
         body = "".join(f'<div class="qg-item"><h5>{h}</h5><p>{t}</p></div>' for h, t in items)
         intro = tr("FanMeta reads your story and recommends the metadata you fill in when posting a work on Archive "
